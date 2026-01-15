@@ -62,7 +62,7 @@ private struct SugarPickerItemCard: View {
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 8)
                 }
-                .frame(width: 130, height: 130)
+                .frame(width: 100, height: 100)
 
                 Text("\(item.sugarGrams)g")
                     .font(.custom("AvenirNext-Medium", size: 12))

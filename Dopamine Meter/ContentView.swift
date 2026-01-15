@@ -17,6 +17,7 @@ struct ContentView: View {
     @EnvironmentObject private var musicPlayer: BackgroundMusicPlayer
     @Environment(\.scenePhase) private var scenePhase
     @State private var isSettingsPresented = false
+    @State private var isCalendarPresented = false
     @StateObject private var sfxPlayer = SoundEffectPlayer(soundName: "SFX1.wav")
 
     init() {
@@ -81,6 +82,7 @@ struct ContentView: View {
                     liquidPalette: viewModel.liquidPalette
                 )
                     .frame(height: 380)
+                    .padding(.bottom, 40)
 
                 VStack(spacing: 10) {
                     Text("\(viewModel.totalSugarGrams)g logged - \(Int(limitProgress * 100))% of \(viewModel.dailyLimit)g")
@@ -123,12 +125,33 @@ struct ContentView: View {
             .padding(.top, 12)
             .padding(.trailing, 16)
         }
+        .overlay(alignment: .topLeading) {
+            Button {
+                sfxPlayer.play()
+                isCalendarPresented = true
+            } label: {
+                Image(systemName: "calendar")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundStyle(AppTheme.textPrimary)
+                    .padding(10)
+                    .background(
+                        Circle()
+                            .fill(Color.white.opacity(0.85))
+                            .shadow(color: Color.black.opacity(0.12), radius: 6, x: 0, y: 3)
+                    )
+            }
+            .padding(.top, 12)
+            .padding(.leading, 16)
+        }
         .sheet(isPresented: $isSettingsPresented) {
             SettingsView(onReset: {
                 sfxPlayer.play()
                 viewModel.reset()
             })
                 .environmentObject(musicPlayer)
+        }
+        .sheet(isPresented: $isCalendarPresented) {
+            CalendarView()
         }
         .overlay {
             if let message = viewModel.levelMessage {

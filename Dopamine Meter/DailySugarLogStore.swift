@@ -29,6 +29,18 @@ final class DailySugarLogStore {
         saveHistory(logs)
     }
 
+    func loggedDateKeys(minGrams: Int = 1) -> Set<String> {
+        let logs = history()
+        let keys = logs.compactMap { key, log -> String? in
+            log.grams >= minGrams ? key : nil
+        }
+        return Set(keys)
+    }
+
+    func dateKeyString(for date: Date) -> String {
+        dateKey(for: date)
+    }
+
     private func history() -> [String: DailySugarLog] {
         guard let data = userDefaults.data(forKey: historyKey) else {
             return [:]
