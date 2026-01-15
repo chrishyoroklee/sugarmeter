@@ -25,8 +25,8 @@ struct OnboardingView: View {
         .background(
             LinearGradient(
                 colors: [
-                    Color(red: 0.99, green: 0.95, blue: 0.91),
-                    Color(red: 0.93, green: 0.9, blue: 0.95)
+                    AppTheme.backgroundTop,
+                    AppTheme.backgroundBottom
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
@@ -53,15 +53,15 @@ struct OnboardingWelcomeView: View {
             VStack(spacing: 10) {
                 Text("Welcome")
                     .font(.custom("AvenirNext-Heavy", size: 34))
-                    .foregroundStyle(Color(red: 0.2, green: 0.18, blue: 0.18))
+                    .foregroundStyle(AppTheme.textPrimary)
                 Text("Track added sugar easily")
                     .font(.custom("AvenirNext-Medium", size: 16))
-                    .foregroundStyle(Color(red: 0.35, green: 0.32, blue: 0.32))
+                    .foregroundStyle(AppTheme.textSecondary)
             }
 
             Image(systemName: "cup.and.saucer.fill")
                 .font(.system(size: 72, weight: .semibold))
-                .foregroundStyle(Color(red: 0.93, green: 0.45, blue: 0.2))
+                .foregroundStyle(AppTheme.primary)
                 .padding(.top, 8)
 
             Spacer()
@@ -74,7 +74,7 @@ struct OnboardingWelcomeView: View {
                     .padding(.vertical, 14)
                     .background(
                         Capsule()
-                            .fill(Color(red: 0.93, green: 0.45, blue: 0.2))
+                            .fill(AppTheme.primary)
                     )
             }
             .padding(.bottom, 60)
@@ -94,10 +94,10 @@ struct OnboardingStyleView: View {
             VStack(spacing: 6) {
                 Text("Pick experience")
                     .font(.custom("AvenirNext-Heavy", size: 28))
-                    .foregroundStyle(Color(red: 0.2, green: 0.18, blue: 0.18))
+                    .foregroundStyle(AppTheme.textPrimary)
 //                Text("Optional but powerful")
 //                    .font(.custom("AvenirNext-Medium", size: 14))
-//                    .foregroundStyle(Color(red: 0.35, green: 0.32, blue: 0.32))
+//                    .foregroundStyle(AppTheme.textSecondary)
             }
 
             VStack(spacing: 12) {
@@ -108,15 +108,15 @@ struct OnboardingStyleView: View {
                         HStack(spacing: 14) {
                             Image(systemName: viewModel.selectedStyle == style ? "largecircle.fill.circle" : "circle")
                                 .font(.system(size: 18, weight: .semibold))
-                                .foregroundStyle(Color(red: 0.93, green: 0.45, blue: 0.2))
+                                .foregroundStyle(AppTheme.primary)
 
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(style.title)
                                     .font(.custom("AvenirNext-DemiBold", size: 16))
-                                    .foregroundStyle(Color(red: 0.24, green: 0.22, blue: 0.2))
+                                    .foregroundStyle(AppTheme.textPrimary)
                                 Text(style.detail)
                                     .font(.custom("AvenirNext-Medium", size: 13))
-                                    .foregroundStyle(Color(red: 0.38, green: 0.35, blue: 0.33))
+                                    .foregroundStyle(AppTheme.textSecondary)
                             }
 
                             Spacer()
@@ -125,7 +125,7 @@ struct OnboardingStyleView: View {
                         .padding(.horizontal, 14)
                         .background(
                             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                                .fill(Color.white.opacity(viewModel.selectedStyle == style ? 0.9 : 0.6))
+                                .fill(viewModel.selectedStyle == style ? AppTheme.secondary.opacity(0.7) : Color.white.opacity(0.6))
                         )
                     }
                 }
@@ -135,7 +135,7 @@ struct OnboardingStyleView: View {
                 VStack(spacing: 8) {
                     Text("Custom daily limit")
                         .font(.custom("AvenirNext-Medium", size: 13))
-                        .foregroundStyle(Color(red: 0.38, green: 0.35, blue: 0.33))
+                        .foregroundStyle(AppTheme.textSecondary)
                     TextField("Enter grams per day", text: $viewModel.customGramsText)
                         .keyboardType(.numberPad)
                         .padding(.horizontal, 14)
@@ -146,7 +146,7 @@ struct OnboardingStyleView: View {
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .stroke(Color(red: 0.85, green: 0.8, blue: 0.76), lineWidth: 1)
+                                .stroke(AppTheme.border, lineWidth: 1)
                         )
                 }
                 .padding(.horizontal, 24)
@@ -162,7 +162,7 @@ struct OnboardingStyleView: View {
                     .padding(.vertical, 14)
                     .background(
                         Capsule()
-                            .fill(Color(red: 0.93, green: 0.45, blue: 0.2))
+                            .fill(AppTheme.primary)
                     )
             }
             .disabled(!viewModel.canContinue)

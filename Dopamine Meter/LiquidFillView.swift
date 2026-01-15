@@ -7,6 +7,7 @@ struct LiquidFillView: View {
     var surfaceHeight: CGFloat
     var recommendedLevel: Double
     var ringLines: [RingLine]
+    var palette: LiquidPalette
 
     var body: some View {
         let fill = min(max(fillLevel, 0), 1)
@@ -21,9 +22,9 @@ struct LiquidFillView: View {
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color(red: 1.0, green: 0.73, blue: 0.36).opacity(0.95),
-                                Color(red: 0.94, green: 0.48, blue: 0.2).opacity(0.96),
-                                Color(red: 0.74, green: 0.25, blue: 0.16).opacity(0.98)
+                                palette.top,
+                                palette.mid,
+                                palette.bottom
                             ],
                             startPoint: .top,
                             endPoint: .bottom
@@ -63,7 +64,10 @@ struct LiquidFillView: View {
             }
 
             if fill > 0.01 {
-                LiquidSurfaceView(size: CGSize(width: size.width * 0.92, height: surfaceHeight))
+                LiquidSurfaceView(
+                    size: CGSize(width: size.width * 0.92, height: surfaceHeight),
+                    palette: palette
+                )
                     .offset(y: surfaceOffset)
             }
 
@@ -88,7 +92,7 @@ struct LiquidFillView: View {
             }
 
             Rectangle()
-                .fill(Color(red: 0.93, green: 0.45, blue: 0.2).opacity(0.75))
+                .fill(AppTheme.primary.opacity(0.75))
                 .frame(height: 2)
                 .offset(y: -recommendedHeight)
                 .shadow(color: Color.white.opacity(0.4), radius: 2, x: 0, y: 0)
@@ -100,6 +104,7 @@ struct LiquidFillView: View {
 
 struct LiquidSurfaceView: View {
     var size: CGSize
+    var palette: LiquidPalette
 
     var body: some View {
         let highlightStroke = size.height * 0.12
@@ -109,8 +114,8 @@ struct LiquidSurfaceView: View {
                 .fill(
                     LinearGradient(
                         colors: [
-                            Color(red: 1.0, green: 0.78, blue: 0.38).opacity(0.98),
-                            Color(red: 0.92, green: 0.42, blue: 0.22).opacity(0.95)
+                            palette.surfaceTop,
+                            palette.surfaceBottom
                         ],
                         startPoint: .leading,
                         endPoint: .trailing

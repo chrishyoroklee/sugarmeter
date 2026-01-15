@@ -15,6 +15,14 @@ struct SugarZone: Identifiable, Equatable {
     let color: Color
 }
 
+struct LiquidPalette: Equatable {
+    let top: Color
+    let mid: Color
+    let bottom: Color
+    let surfaceTop: Color
+    let surfaceBottom: Color
+}
+
 struct RingLine: Identifiable, Equatable {
     let id = UUID()
     let fraction: Double
@@ -90,6 +98,43 @@ enum SugarLevel: Int, CaseIterable {
             return Color(red: 0.9, green: 0.2, blue: 0.2)
         case .l5:
             return Color(red: 0.62, green: 0.28, blue: 0.84)
+        }
+    }
+
+    var liquidPalette: LiquidPalette {
+        switch self {
+        case .l1:
+            return LiquidPalette(
+                top: Color(red: 1.0, green: 0.84, blue: 0.6).opacity(0.95),
+                mid: Color(red: 0.98, green: 0.66, blue: 0.32).opacity(0.96),
+                bottom: Color(red: 0.86, green: 0.42, blue: 0.2).opacity(0.98),
+                surfaceTop: Color(red: 1.0, green: 0.88, blue: 0.64).opacity(0.98),
+                surfaceBottom: Color(red: 0.95, green: 0.62, blue: 0.3).opacity(0.95)
+            )
+        case .l2:
+            return LiquidPalette(
+                top: Color(red: 1.0, green: 0.76, blue: 0.42).opacity(0.95),
+                mid: Color(red: 0.96, green: 0.55, blue: 0.22).opacity(0.96),
+                bottom: Color(red: 0.82, green: 0.38, blue: 0.18).opacity(0.98),
+                surfaceTop: Color(red: 1.0, green: 0.8, blue: 0.46).opacity(0.98),
+                surfaceBottom: Color(red: 0.94, green: 0.52, blue: 0.22).opacity(0.95)
+            )
+        case .l3:
+            return LiquidPalette(
+                top: Color(red: 0.98, green: 0.66, blue: 0.32).opacity(0.95),
+                mid: Color(red: 0.9, green: 0.44, blue: 0.18).opacity(0.96),
+                bottom: Color(red: 0.72, green: 0.26, blue: 0.14).opacity(0.98),
+                surfaceTop: Color(red: 0.98, green: 0.7, blue: 0.34).opacity(0.98),
+                surfaceBottom: Color(red: 0.86, green: 0.4, blue: 0.18).opacity(0.95)
+            )
+        case .l4, .l5:
+            return LiquidPalette(
+                top: Color(red: 0.98, green: 0.4, blue: 0.32).opacity(0.95),
+                mid: Color(red: 0.9, green: 0.22, blue: 0.18).opacity(0.96),
+                bottom: Color(red: 0.7, green: 0.12, blue: 0.12).opacity(0.98),
+                surfaceTop: Color(red: 1.0, green: 0.46, blue: 0.36).opacity(0.98),
+                surfaceBottom: Color(red: 0.86, green: 0.2, blue: 0.18).opacity(0.95)
+            )
         }
     }
 

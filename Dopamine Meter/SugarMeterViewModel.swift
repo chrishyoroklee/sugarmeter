@@ -47,6 +47,10 @@ final class SugarMeterViewModel: ObservableObject {
         SugarLevel.level(for: totalSugarGrams)
     }
 
+    var liquidPalette: LiquidPalette {
+        currentLevel.liquidPalette
+    }
+
     var ringLines: [RingLine] {
         let capacity = Double(maxVisualGrams)
         guard capacity > 0 else { return [] }

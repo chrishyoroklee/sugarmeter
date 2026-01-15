@@ -4,14 +4,15 @@ struct SugarMeterView: View {
     var fillLevel: Double
     var recommendedLevel: Double
     var ringLines: [RingLine]
+    var liquidPalette: LiquidPalette
 
     var body: some View {
         GeometryReader { geo in
             let size = geo.size
-            let width = min(size.width, size.height * 0.72)
+            let width = min(size.width, size.height * 0.78)
             let height = size.height
-            let rimHeight = width * 0.22
-            let bodyWidth = width * 0.82
+            let rimHeight = width * 0.24
+            let bodyWidth = width * 0.86
             let bodyHeight = height - rimHeight * 0.2
             let bodyTop = rimHeight * 0.35
             let cornerRadius = bodyWidth * 0.22
@@ -71,7 +72,8 @@ struct SugarMeterView: View {
                     cornerRadius: cornerRadius * 0.9,
                     surfaceHeight: surfaceHeight,
                     recommendedLevel: recommendedLevel,
-                    ringLines: ringLines
+                    ringLines: ringLines,
+                    palette: liquidPalette
                 )
                 .offset(y: liquidContainerTop)
 

@@ -33,8 +33,8 @@ struct ContentView: View {
         ZStack {
             LinearGradient(
                 colors: [
-                    Color(red: 0.98, green: 0.95, blue: 0.9),
-                    Color(red: 0.88, green: 0.9, blue: 0.96)
+                    AppTheme.backgroundTop,
+                    AppTheme.backgroundBottom
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
@@ -45,7 +45,7 @@ struct ContentView: View {
                 .fill(
                     RadialGradient(
                         colors: [
-                            Color(red: 1.0, green: 0.8, blue: 0.55).opacity(0.35),
+                            AppTheme.glow.opacity(0.35),
                             Color.clear
                         ],
                         center: .center,
@@ -57,25 +57,26 @@ struct ContentView: View {
 
             VStack(spacing: 20) {
                 VStack(spacing: 6) {
-                    Text("SugarMetre")
+                    Text("SugaMeter")
                         .font(.custom("AvenirNext-Heavy", size: 34))
-                        .foregroundStyle(Color(red: 0.2, green: 0.18, blue: 0.18))
+                        .foregroundStyle(AppTheme.textPrimary)
                     Text("Track your sugar!")
                         .font(.custom("AvenirNext-Medium", size: 14))
-                        .foregroundStyle(Color(red: 0.35, green: 0.32, blue: 0.32))
+                        .foregroundStyle(AppTheme.textSecondary)
                 }
 
                 SugarMeterView(
                     fillLevel: fillLevel,
                     recommendedLevel: viewModel.recommendedLevel,
-                    ringLines: viewModel.ringLines
+                    ringLines: viewModel.ringLines,
+                    liquidPalette: viewModel.liquidPalette
                 )
-                    .frame(height: 320)
+                    .frame(height: 380)
 
                 VStack(spacing: 10) {
                     Text("\(viewModel.totalSugarGrams)g logged - \(Int(limitProgress * 100))% of \(viewModel.dailyLimit)g")
                         .font(.custom("AvenirNext-DemiBold", size: 16))
-                        .foregroundStyle(Color(red: 0.32, green: 0.28, blue: 0.26))
+                        .foregroundStyle(AppTheme.textMuted)
 
                     HStack(spacing: 8) {
                         Circle()
@@ -105,7 +106,7 @@ struct ContentView: View {
                         .padding(.vertical, 12)
                         .background(
                             Capsule()
-                                .fill(Color(red: 0.93, green: 0.45, blue: 0.2))
+                                .fill(AppTheme.primary)
                         )
                     }
 
@@ -115,12 +116,12 @@ struct ContentView: View {
                     } label: {
                         Text("Reset")
                             .font(.custom("AvenirNext-Medium", size: 14))
-                            .foregroundStyle(Color(red: 0.4, green: 0.35, blue: 0.32))
+                            .foregroundStyle(AppTheme.textSecondary)
                             .padding(.horizontal, 16)
                             .padding(.vertical, 8)
                             .background(
                                 Capsule()
-                                    .stroke(Color(red: 0.78, green: 0.72, blue: 0.68), lineWidth: 1)
+                                    .stroke(AppTheme.border, lineWidth: 1)
                             )
                     }
                 }
@@ -134,7 +135,7 @@ struct ContentView: View {
             } label: {
                 Image(systemName: "gearshape.fill")
                     .font(.system(size: 16, weight: .bold))
-                    .foregroundStyle(Color(red: 0.2, green: 0.18, blue: 0.18))
+                    .foregroundStyle(AppTheme.textPrimary)
                     .padding(10)
                     .background(
                         Circle()

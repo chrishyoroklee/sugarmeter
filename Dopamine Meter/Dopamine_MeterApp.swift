@@ -11,10 +11,7 @@ import SwiftUI
 struct Dopamine_MeterApp: App {
     @StateObject private var musicPlayer = BackgroundMusicPlayer(
         tracks: [
-            MusicTrack(id: "main1", displayName: "Main 1", fileName: "main1.mp3"),
-            MusicTrack(id: "main2", displayName: "Main 2", fileName: "main2.mp3"),
-            MusicTrack(id: "main3", displayName: "Main 3", fileName: "main3.mp3"),
-            MusicTrack(id: "main4", displayName: "Main 4", fileName: "main4.mp3")
+            MusicTrack(id: "main5", displayName: "Main 5", fileName: "main5.mp3")
         ]
     )
 
