@@ -11,6 +11,7 @@ struct ContentView: View {
     @AppStorage("dailySugarLimit") private var storedDailyLimit = 36
     @StateObject private var viewModel: SugarMeterViewModel
     @EnvironmentObject private var musicPlayer: BackgroundMusicPlayer
+    @Environment(\.scenePhase) private var scenePhase
     @State private var isSettingsPresented = false
     @StateObject private var sfxPlayer = SoundEffectPlayer(soundName: "SFX1.wav")
 
@@ -21,7 +22,11 @@ struct ContentView: View {
     }
 
     private var fillLevel: Double {
-        viewModel.fillLevel
+        viewModel.visualFillLevel
+    }
+
+    private var limitProgress: Double {
+        viewModel.limitProgress
     }
 
     var body: some View {
@@ -60,13 +65,26 @@ struct ContentView: View {
                         .foregroundStyle(Color(red: 0.35, green: 0.32, blue: 0.32))
                 }
 
-                SugarMeterView(fillLevel: fillLevel)
+                SugarMeterView(
+                    fillLevel: fillLevel,
+                    recommendedLevel: viewModel.recommendedLevel,
+                    ringLines: viewModel.ringLines
+                )
                     .frame(height: 320)
 
                 VStack(spacing: 10) {
-                    Text("\(viewModel.totalSugarGrams)g logged · \(Int(fillLevel * 100))% of \(viewModel.dailyLimit)g")
+                    Text("\(viewModel.totalSugarGrams)g logged - \(Int(limitProgress * 100))% of \(viewModel.dailyLimit)g")
                         .font(.custom("AvenirNext-DemiBold", size: 16))
                         .foregroundStyle(Color(red: 0.32, green: 0.28, blue: 0.26))
+
+                    HStack(spacing: 8) {
+                        Circle()
+                            .fill(viewModel.currentLevel.color)
+                            .frame(width: 8, height: 8)
+                        Text("Level \(viewModel.currentLevel.rawValue): \(viewModel.currentLevel.statusLabel)")
+                            .font(.custom("AvenirNext-Medium", size: 13))
+                            .foregroundStyle(viewModel.currentLevel.color)
+                    }
 
                     Menu {
                         ForEach(viewModel.items) { item in
@@ -90,8 +108,6 @@ struct ContentView: View {
                                 .fill(Color(red: 0.93, green: 0.45, blue: 0.2))
                         )
                     }
-                    .disabled(viewModel.isFull)
-                    .opacity(viewModel.isFull ? 0.6 : 1)
 
                     Button {
                         sfxPlayer.play()
@@ -133,8 +149,25 @@ struct ContentView: View {
             SettingsView()
                 .environmentObject(musicPlayer)
         }
+        .alert(item: $viewModel.levelMessage) { message in
+            Alert(
+                title: Text(message.title),
+                message: Text(message.body),
+                dismissButton: .default(Text("OK"))
+            )
+        }
+        .onAppear {
+            viewModel.ensureDailyReset()
+            viewModel.startDailyResetTimer()
+        }
         .onChange(of: storedDailyLimit) { newValue in
             viewModel.updateDailyLimit(newValue)
+        }
+        .onChange(of: scenePhase) { newPhase in
+            if newPhase == .active {
+                viewModel.ensureDailyReset()
+                viewModel.startDailyResetTimer()
+            }
         }
     }
 }

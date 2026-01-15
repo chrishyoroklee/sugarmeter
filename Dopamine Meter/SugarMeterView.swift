@@ -2,6 +2,8 @@ import SwiftUI
 
 struct SugarMeterView: View {
     var fillLevel: Double
+    var recommendedLevel: Double
+    var ringLines: [RingLine]
 
     var body: some View {
         GeometryReader { geo in
@@ -67,7 +69,9 @@ struct SugarMeterView: View {
                     fillLevel: fill,
                     size: CGSize(width: bodyWidth * 0.9, height: liquidContainerHeight),
                     cornerRadius: cornerRadius * 0.9,
-                    surfaceHeight: surfaceHeight
+                    surfaceHeight: surfaceHeight,
+                    recommendedLevel: recommendedLevel,
+                    ringLines: ringLines
                 )
                 .offset(y: liquidContainerTop)
 

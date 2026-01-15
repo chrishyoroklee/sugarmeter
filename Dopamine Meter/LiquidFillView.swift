@@ -5,10 +5,13 @@ struct LiquidFillView: View {
     var size: CGSize
     var cornerRadius: CGFloat
     var surfaceHeight: CGFloat
+    var recommendedLevel: Double
+    var ringLines: [RingLine]
 
     var body: some View {
         let fill = min(max(fillLevel, 0), 1)
         let fillHeight = size.height * fill
+        let recommendedHeight = size.height * min(max(recommendedLevel, 0), 1)
         let surfaceOffset = -max(fillHeight - surfaceHeight * 0.5, 0)
         let bodyShape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
 
@@ -63,6 +66,32 @@ struct LiquidFillView: View {
                 LiquidSurfaceView(size: CGSize(width: size.width * 0.92, height: surfaceHeight))
                     .offset(y: surfaceOffset)
             }
+
+            ForEach(ringLines) { ring in
+                Group {
+                    if ring.isDashed {
+                        Path { path in
+                            path.move(to: CGPoint(x: 0, y: 0))
+                            path.addLine(to: CGPoint(x: size.width, y: 0))
+                        }
+                        .stroke(
+                            ring.color.opacity(0.7),
+                            style: StrokeStyle(lineWidth: 1, dash: [6, 6])
+                        )
+                    } else {
+                        Rectangle()
+                            .fill(ring.color.opacity(0.55))
+                            .frame(height: 1)
+                    }
+                }
+                .offset(y: -size.height * ring.fraction)
+            }
+
+            Rectangle()
+                .fill(Color(red: 0.93, green: 0.45, blue: 0.2).opacity(0.75))
+                .frame(height: 2)
+                .offset(y: -recommendedHeight)
+                .shadow(color: Color.white.opacity(0.4), radius: 2, x: 0, y: 0)
         }
         .frame(width: size.width, height: size.height, alignment: .bottom)
         .clipShape(bodyShape)
