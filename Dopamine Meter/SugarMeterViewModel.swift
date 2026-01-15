@@ -8,6 +8,7 @@ final class SugarMeterViewModel: ObservableObject {
     @Published private(set) var thresholdMultipliers: ThresholdMultipliers
     let items: [SugarItem]
     let visualCapacityMultiplier: Double
+    private let logStore = DailySugarLogStore()
     private let minimumVisualCapacityGrams = 180
     private let lastResetKey = "lastResetDate"
     private var resetTimer: Timer?
@@ -23,6 +24,9 @@ final class SugarMeterViewModel: ObservableObject {
         self.items = items
         self.visualCapacityMultiplier = max(visualCapacityMultiplier, 1)
         self.thresholdMultipliers = thresholdMultipliers.normalized()
+        let storedLog = logStore.log(for: Date())
+        self.totalSugarGrams = storedLog.grams
+        self.logCount = storedLog.count
     }
 
     var visualFillLevel: Double {
@@ -80,6 +84,7 @@ final class SugarMeterViewModel: ObservableObject {
             totalSugarGrams += grams(for: item, size: size)
             logCount += 1
         }
+        persistCurrentLog()
         notifyLevelIfNeeded()
     }
 
@@ -89,6 +94,7 @@ final class SugarMeterViewModel: ObservableObject {
             logCount = 0
         }
         lastNotifiedLevel = .l1
+        persistCurrentLog()
     }
 
     func updateDailyLimit(_ newLimit: Int) {
@@ -106,6 +112,10 @@ final class SugarMeterViewModel: ObservableObject {
 
     func clearLevelMessage() {
         levelMessage = nil
+    }
+
+    private func persistCurrentLog() {
+        logStore.saveLog(grams: totalSugarGrams, count: logCount, for: Date())
     }
 
     func ensureDailyReset() {

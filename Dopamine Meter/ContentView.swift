@@ -17,7 +17,6 @@ struct ContentView: View {
     @EnvironmentObject private var musicPlayer: BackgroundMusicPlayer
     @Environment(\.scenePhase) private var scenePhase
     @State private var isSettingsPresented = false
-    @State private var isLogSugarPresented = false
     @StateObject private var sfxPlayer = SoundEffectPlayer(soundName: "SFX1.wav")
 
     init() {
@@ -70,7 +69,7 @@ struct ContentView: View {
                     Text("SugaMeter")
                         .font(.custom("AvenirNext-Heavy", size: 34))
                         .foregroundStyle(AppTheme.textPrimary)
-                    Text("Track your sugar!")
+                    Text("Track your daily sugar intake!")
                         .font(.custom("AvenirNext-Medium", size: 14))
                         .foregroundStyle(AppTheme.textSecondary)
                 }
@@ -97,23 +96,9 @@ struct ContentView: View {
                             .foregroundStyle(viewModel.currentLevel.color)
                     }
 
-                    Button {
+                    SugarPickerView(items: viewModel.items) { item, size in
                         sfxPlayer.play()
-                        isLogSugarPresented = true
-                    } label: {
-                        HStack(spacing: 8) {
-                            Image(systemName: "plus.circle.fill")
-                                .font(.system(size: 18, weight: .bold))
-                            Text("Log Sugar")
-                                .font(.custom("AvenirNext-DemiBold", size: 16))
-                        }
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 22)
-                        .padding(.vertical, 12)
-                        .background(
-                            Capsule()
-                                .fill(AppTheme.primary)
-                        )
+                        viewModel.logSugar(item, size: size)
                     }
 
                 }
@@ -144,12 +129,6 @@ struct ContentView: View {
                 viewModel.reset()
             })
                 .environmentObject(musicPlayer)
-        }
-        .sheet(isPresented: $isLogSugarPresented) {
-            LogSugarView(items: viewModel.items) { item, size in
-                sfxPlayer.play()
-                viewModel.logSugar(item, size: size)
-            }
         }
         .overlay {
             if let message = viewModel.levelMessage {
