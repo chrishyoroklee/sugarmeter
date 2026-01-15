@@ -195,17 +195,17 @@ enum SugarLevel: Int, CaseIterable {
         case .l2:
             return LevelMessage(
                 title: "Level 2 - Caution",
-                body: "Moderate Zone (\(bounds.l1Max)-\(bounds.l2Max)g). Over your target max (\(bounds.l1Max)g/day)!"
+                body: "Moderate Zone (\(bounds.l1Max)-\(bounds.l2Max)g).\nOver your target max (\(bounds.l1Max)g/day)!"
             )
         case .l3:
             return LevelMessage(
                 title: "Level 3 - Warning",
-                body: "High Zone (\(bounds.l2Max)-\(bounds.l3Max)g)! Be careful!"
+                body: "High Zone (\(bounds.l2Max)-\(bounds.l3Max)g)!\nBe careful!"
             )
         case .l4:
             return LevelMessage(
                 title: "Level 4 - High",
-                body: "Excess Zone (\(bounds.l3Max)-\(bounds.l4Max)g)! Getting dangerous!"
+                body: "Excess Zone (\(bounds.l3Max)-\(bounds.l4Max)g)!\nGetting dangerous!"
             )
         case .l5:
             return LevelMessage(
