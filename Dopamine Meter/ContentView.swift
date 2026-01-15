@@ -9,16 +9,26 @@ import SwiftUI
 
 struct ContentView: View {
     @AppStorage("dailySugarLimit") private var storedDailyLimit = 36
+    @AppStorage("thresholdMultiplierL2") private var thresholdMultiplierL2 = 1.0
+    @AppStorage("thresholdMultiplierL3") private var thresholdMultiplierL3 = 2.0
+    @AppStorage("thresholdMultiplierL4") private var thresholdMultiplierL4 = 4.0
+    @AppStorage("thresholdMultiplierL5") private var thresholdMultiplierL5 = 5.0
     @StateObject private var viewModel: SugarMeterViewModel
     @EnvironmentObject private var musicPlayer: BackgroundMusicPlayer
     @Environment(\.scenePhase) private var scenePhase
     @State private var isSettingsPresented = false
+    @State private var isLogSugarPresented = false
     @StateObject private var sfxPlayer = SoundEffectPlayer(soundName: "SFX1.wav")
 
     init() {
         let stored = UserDefaults.standard.integer(forKey: "dailySugarLimit")
         let limit = stored > 0 ? stored : 36
-        _viewModel = StateObject(wrappedValue: SugarMeterViewModel(dailyLimit: limit))
+        let l2 = UserDefaults.standard.object(forKey: "thresholdMultiplierL2") as? Double ?? 1.0
+        let l3 = UserDefaults.standard.object(forKey: "thresholdMultiplierL3") as? Double ?? 2.0
+        let l4 = UserDefaults.standard.object(forKey: "thresholdMultiplierL4") as? Double ?? 4.0
+        let l5 = UserDefaults.standard.object(forKey: "thresholdMultiplierL5") as? Double ?? 5.0
+        let multipliers = ThresholdMultipliers(l2: l2, l3: l3, l4: l4, l5: l5)
+        _viewModel = StateObject(wrappedValue: SugarMeterViewModel(dailyLimit: limit, thresholdMultipliers: multipliers))
     }
 
     private var fillLevel: Double {
@@ -87,13 +97,9 @@ struct ContentView: View {
                             .foregroundStyle(viewModel.currentLevel.color)
                     }
 
-                    Menu {
-                        ForEach(viewModel.items) { item in
-                            Button("\(item.name) - \(item.sugarGrams)g") {
-                                sfxPlayer.play()
-                                viewModel.logSugar(item)
-                            }
-                        }
+                    Button {
+                        sfxPlayer.play()
+                        isLogSugarPresented = true
                     } label: {
                         HStack(spacing: 8) {
                             Image(systemName: "plus.circle.fill")
@@ -150,19 +156,39 @@ struct ContentView: View {
             SettingsView()
                 .environmentObject(musicPlayer)
         }
-        .alert(item: $viewModel.levelMessage) { message in
-            Alert(
-                title: Text(message.title),
-                message: Text(message.body),
-                dismissButton: .default(Text("OK"))
-            )
+        .sheet(isPresented: $isLogSugarPresented) {
+            LogSugarView(items: viewModel.items) { item in
+                sfxPlayer.play()
+                viewModel.logSugar(item)
+            }
+        }
+        .overlay {
+            if let message = viewModel.levelMessage {
+                LevelMessageView(message: message) {
+                    viewModel.clearLevelMessage()
+                }
+                .transition(.opacity)
+            }
         }
         .onAppear {
             viewModel.ensureDailyReset()
             viewModel.startDailyResetTimer()
+            viewModel.updateThresholdMultipliers(currentThresholdMultipliers())
         }
         .onChange(of: storedDailyLimit) { newValue in
             viewModel.updateDailyLimit(newValue)
+        }
+        .onChange(of: thresholdMultiplierL2) { _ in
+            viewModel.updateThresholdMultipliers(currentThresholdMultipliers())
+        }
+        .onChange(of: thresholdMultiplierL3) { _ in
+            viewModel.updateThresholdMultipliers(currentThresholdMultipliers())
+        }
+        .onChange(of: thresholdMultiplierL4) { _ in
+            viewModel.updateThresholdMultipliers(currentThresholdMultipliers())
+        }
+        .onChange(of: thresholdMultiplierL5) { _ in
+            viewModel.updateThresholdMultipliers(currentThresholdMultipliers())
         }
         .onChange(of: scenePhase) { newPhase in
             if newPhase == .active {
@@ -170,5 +196,14 @@ struct ContentView: View {
                 viewModel.startDailyResetTimer()
             }
         }
+    }
+
+    private func currentThresholdMultipliers() -> ThresholdMultipliers {
+        ThresholdMultipliers(
+            l2: thresholdMultiplierL2,
+            l3: thresholdMultiplierL3,
+            l4: thresholdMultiplierL4,
+            l5: thresholdMultiplierL5
+        )
     }
 }

@@ -36,6 +36,23 @@ struct SugarThreshold: Equatable {
     let isDashed: Bool
 }
 
+struct ThresholdMultipliers: Equatable {
+    var l2: Double
+    var l3: Double
+    var l4: Double
+    var l5: Double
+
+    static let `default` = ThresholdMultipliers(l2: 1, l3: 2, l4: 4, l5: 5)
+
+    func normalized() -> ThresholdMultipliers {
+        let l2 = max(self.l2, 1)
+        let l3 = max(self.l3, l2)
+        let l4 = max(self.l4, l3)
+        let l5 = max(self.l5, l4)
+        return ThresholdMultipliers(l2: l2, l3: l3, l4: l4, l5: l5)
+    }
+}
+
 enum SugarLevel: Int, CaseIterable {
     case l1 = 1
     case l2 = 2
@@ -43,33 +60,65 @@ enum SugarLevel: Int, CaseIterable {
     case l4 = 4
     case l5 = 5
 
-    static func level(for grams: Int) -> SugarLevel {
-        if grams <= 36 {
+    static func level(for grams: Int, dailyLimit: Int, multipliers: ThresholdMultipliers) -> SugarLevel {
+        let bounds = bounds(for: dailyLimit, multipliers: multipliers)
+        if grams <= bounds.l1Max {
             return .l1
-        } else if grams <= 72 {
+        } else if grams <= bounds.l2Max {
             return .l2
-        } else if grams <= 144 {
+        } else if grams <= bounds.l3Max {
             return .l3
-        } else if grams <= 180 {
+        } else if grams <= bounds.l4Max {
             return .l4
         } else {
             return .l5
         }
     }
 
-    static let zones: [SugarZone] = [
-        SugarZone(name: "Healthy Zone", rangeLabel: "0-36g", lowerBound: 0, upperBound: 36, color: Color(red: 0.2, green: 0.7, blue: 0.3)),
-        SugarZone(name: "Moderate Zone", rangeLabel: "36-72g", lowerBound: 36, upperBound: 72, color: Color(red: 0.95, green: 0.8, blue: 0.2)),
-        SugarZone(name: "High Zone", rangeLabel: "72-144g", lowerBound: 72, upperBound: 144, color: Color(red: 0.95, green: 0.55, blue: 0.2)),
-        SugarZone(name: "Excess", rangeLabel: ">144g", lowerBound: 144, upperBound: nil, color: Color(red: 0.9, green: 0.2, blue: 0.2))
-    ]
+    static func thresholds(for dailyLimit: Int, multipliers: ThresholdMultipliers) -> [SugarThreshold] {
+        let normalized = multipliers.normalized()
+        let limit = max(dailyLimit, 1)
+        return [
+            SugarThreshold(grams: grams(limit, normalized.l2), level: .l2, isDashed: false),
+            SugarThreshold(grams: grams(limit, normalized.l3), level: .l3, isDashed: false),
+            SugarThreshold(grams: grams(limit, normalized.l4), level: .l4, isDashed: false),
+            SugarThreshold(grams: grams(limit, normalized.l5), level: .l5, isDashed: true)
+        ]
+    }
 
-    static let thresholds: [SugarThreshold] = [
-        SugarThreshold(grams: 36, level: .l2, isDashed: false),
-        SugarThreshold(grams: 72, level: .l3, isDashed: false),
-        SugarThreshold(grams: 144, level: .l4, isDashed: false),
-        SugarThreshold(grams: 180, level: .l5, isDashed: true)
-    ]
+    static func zones(for dailyLimit: Int, multipliers: ThresholdMultipliers) -> [SugarZone] {
+        let bounds = bounds(for: dailyLimit, multipliers: multipliers)
+        return [
+            SugarZone(
+                name: "Healthy Zone",
+                rangeLabel: "0-\(bounds.l1Max)g",
+                lowerBound: 0,
+                upperBound: bounds.l1Max,
+                color: Color(red: 0.2, green: 0.7, blue: 0.3)
+            ),
+            SugarZone(
+                name: "Moderate Zone",
+                rangeLabel: "\(bounds.l1Max)-\(bounds.l2Max)g",
+                lowerBound: bounds.l1Max,
+                upperBound: bounds.l2Max,
+                color: Color(red: 0.95, green: 0.8, blue: 0.2)
+            ),
+            SugarZone(
+                name: "High Zone",
+                rangeLabel: "\(bounds.l2Max)-\(bounds.l3Max)g",
+                lowerBound: bounds.l2Max,
+                upperBound: bounds.l3Max,
+                color: Color(red: 0.95, green: 0.55, blue: 0.2)
+            ),
+            SugarZone(
+                name: "Excess",
+                rangeLabel: ">\(bounds.l3Max)g",
+                lowerBound: bounds.l3Max,
+                upperBound: nil,
+                color: Color(red: 0.9, green: 0.2, blue: 0.2)
+            )
+        ]
+    }
 
     var statusLabel: String {
         switch self {
@@ -138,30 +187,53 @@ enum SugarLevel: Int, CaseIterable {
         }
     }
 
-    var message: LevelMessage? {
+    func message(dailyLimit: Int, multipliers: ThresholdMultipliers) -> LevelMessage? {
+        let bounds = SugarLevel.bounds(for: dailyLimit, multipliers: multipliers)
         switch self {
         case .l1:
             return nil
         case .l2:
             return LevelMessage(
                 title: "Level 2 - Caution",
-                body: "Moderate Zone (36-72g). Over the recommended max (36g/day)."
+                body: "Moderate Zone (\(bounds.l1Max)-\(bounds.l2Max)g). Over your target max (\(bounds.l1Max)g/day)!"
             )
         case .l3:
             return LevelMessage(
                 title: "Level 3 - Warning",
-                body: "High Zone (72-144g). Typical American range (~4x strict)."
+                body: "High Zone (\(bounds.l2Max)-\(bounds.l3Max)g)! Be careful!"
             )
         case .l4:
             return LevelMessage(
                 title: "Level 4 - High",
-                body: "Excess Zone (>144g). You are above the lenient ceiling."
+                body: "Excess Zone (\(bounds.l3Max)-\(bounds.l4Max)g)! Getting dangerous!"
             )
         case .l5:
             return LevelMessage(
                 title: "Level 5 - OMG",
-                body: "Over 180g/day. Consider a reset tomorrow."
+                body: "Over \(bounds.l4Max)g/day! Oh no!"
             )
         }
+    }
+
+    private struct LevelBounds {
+        let l1Max: Int
+        let l2Max: Int
+        let l3Max: Int
+        let l4Max: Int
+    }
+
+    private static func bounds(for dailyLimit: Int, multipliers: ThresholdMultipliers) -> LevelBounds {
+        let limit = max(dailyLimit, 1)
+        let normalized = multipliers.normalized()
+        return LevelBounds(
+            l1Max: grams(limit, normalized.l2),
+            l2Max: grams(limit, normalized.l3),
+            l3Max: grams(limit, normalized.l4),
+            l4Max: grams(limit, normalized.l5)
+        )
+    }
+
+    private static func grams(_ limit: Int, _ multiplier: Double) -> Int {
+        Int((Double(limit) * multiplier).rounded())
     }
 }

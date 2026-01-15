@@ -8,6 +8,16 @@ struct MusicTrack: Identifiable, Equatable {
 
 final class BackgroundMusicPlayer: NSObject, ObservableObject {
     let tracks: [MusicTrack]
+    @Published var volume: Double {
+        didSet {
+            let clamped = max(0, min(volume, 1))
+            if volume != clamped {
+                volume = clamped
+                return
+            }
+            player?.volume = Float(volume)
+        }
+    }
     @Published var selectedTrackID: String {
         didSet {
             guard !isSelectionChangeInternal else { return }
@@ -19,10 +29,16 @@ final class BackgroundMusicPlayer: NSObject, ObservableObject {
     private var player: AVAudioPlayer?
     private var hasStarted = false
     private var isSelectionChangeInternal = false
+    private let volumeKey = "musicVolume"
 
     init(tracks: [MusicTrack]) {
         self.tracks = tracks
         self.selectedTrackID = tracks.first?.id ?? ""
+        if let storedVolume = UserDefaults.standard.object(forKey: volumeKey) as? Double {
+            self.volume = storedVolume
+        } else {
+            self.volume = 0.7
+        }
         super.init()
         if let index = tracks.firstIndex(where: { $0.id == selectedTrackID }) {
             currentIndex = index
@@ -61,7 +77,7 @@ final class BackgroundMusicPlayer: NSObject, ObservableObject {
         do {
             player = try AVAudioPlayer(contentsOf: url)
             player?.delegate = self
-            player?.volume = 0.7
+            player?.volume = Float(volume)
             player?.play()
         } catch {
             player = nil

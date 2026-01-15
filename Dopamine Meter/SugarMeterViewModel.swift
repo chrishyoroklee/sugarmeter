@@ -5,6 +5,7 @@ final class SugarMeterViewModel: ObservableObject {
     @Published private(set) var logCount: Int = 0
     @Published private(set) var dailyLimit: Int
     @Published var levelMessage: LevelMessage?
+    @Published private(set) var thresholdMultipliers: ThresholdMultipliers
     let items: [SugarItem]
     let visualCapacityMultiplier: Double
     private let minimumVisualCapacityGrams = 180
@@ -15,11 +16,13 @@ final class SugarMeterViewModel: ObservableObject {
     init(
         dailyLimit: Int = 36,
         items: [SugarItem] = SugarMeterViewModel.defaultItems,
-        visualCapacityMultiplier: Double = 2.0
+        visualCapacityMultiplier: Double = 5.0,
+        thresholdMultipliers: ThresholdMultipliers = .default
     ) {
         self.dailyLimit = max(dailyLimit, 1)
         self.items = items
         self.visualCapacityMultiplier = max(visualCapacityMultiplier, 1)
+        self.thresholdMultipliers = thresholdMultipliers.normalized()
     }
 
     var visualFillLevel: Double {
@@ -40,11 +43,13 @@ final class SugarMeterViewModel: ObservableObject {
     }
 
     private var maxVisualGrams: Int {
-        max(Int(Double(dailyLimit) * visualCapacityMultiplier), minimumVisualCapacityGrams)
+        let thresholdMultiplier = thresholdMultipliers.normalized().l5
+        let baseMultiplier = max(visualCapacityMultiplier, thresholdMultiplier)
+        return max(Int(Double(dailyLimit) * baseMultiplier), minimumVisualCapacityGrams)
     }
 
     var currentLevel: SugarLevel {
-        SugarLevel.level(for: totalSugarGrams)
+        SugarLevel.level(for: totalSugarGrams, dailyLimit: dailyLimit, multipliers: thresholdMultipliers)
     }
 
     var liquidPalette: LiquidPalette {
@@ -55,7 +60,7 @@ final class SugarMeterViewModel: ObservableObject {
         let capacity = Double(maxVisualGrams)
         guard capacity > 0 else { return [] }
         let recommended = Double(dailyLimit) / capacity
-        let lines = SugarLevel.thresholds.map { threshold in
+        let lines = SugarLevel.thresholds(for: dailyLimit, multipliers: thresholdMultipliers).map { threshold in
             RingLine(
                 fraction: min(Double(threshold.grams) / capacity, 1.0),
                 color: threshold.level.color,
@@ -86,6 +91,15 @@ final class SugarMeterViewModel: ObservableObject {
         dailyLimit = max(newLimit, 1)
     }
 
+    func updateThresholdMultipliers(_ multipliers: ThresholdMultipliers) {
+        thresholdMultipliers = multipliers.normalized()
+        lastNotifiedLevel = currentLevel
+    }
+
+    func clearLevelMessage() {
+        levelMessage = nil
+    }
+
     func ensureDailyReset() {
         let now = Date()
         guard let lastReset = loadLastResetDate() else {
@@ -104,10 +118,10 @@ final class SugarMeterViewModel: ObservableObject {
     }
 
     private func notifyLevelIfNeeded() {
-        let level = SugarLevel.level(for: totalSugarGrams)
+        let level = SugarLevel.level(for: totalSugarGrams, dailyLimit: dailyLimit, multipliers: thresholdMultipliers)
         guard level.rawValue > lastNotifiedLevel.rawValue else { return }
         lastNotifiedLevel = level
-        if let message = level.message {
+        if let message = level.message(dailyLimit: dailyLimit, multipliers: thresholdMultipliers) {
             levelMessage = message
         }
     }

@@ -2,6 +2,7 @@ import SwiftUI
 
 enum AppTheme {
     static let primary = Color(red: 0.93, green: 0.45, blue: 0.2)
+    static let primaryLight = Color(red: 0.95, green: 0.62, blue: 0.44)
     static let secondary = Color(red: 0.98, green: 0.82, blue: 0.65)
 
     static let backgroundTop = Color(red: 0.98, green: 0.95, blue: 0.9)
