@@ -6,13 +6,16 @@ final class SugarMeterViewModel: ObservableObject {
     @Published private(set) var dailyLimit: Int
     @Published var levelMessage: LevelMessage?
     @Published private(set) var thresholdMultipliers: ThresholdMultipliers
+    @Published private(set) var displayedItems: [SugarItem]
     let items: [SugarItem]
     let visualCapacityMultiplier: Double
     private let logStore = DailySugarLogStore()
     private let minimumVisualCapacityGrams = 180
     private let lastResetKey = "lastResetDate"
+    private static let recentItemsKey = "recentSugarItems"
     private var resetTimer: Timer?
     private var lastNotifiedLevel: SugarLevel = .l1
+    private var recentItemNames: [String]
 
     init(
         dailyLimit: Int = 36,
@@ -24,6 +27,8 @@ final class SugarMeterViewModel: ObservableObject {
         self.items = items
         self.visualCapacityMultiplier = max(visualCapacityMultiplier, 1)
         self.thresholdMultipliers = thresholdMultipliers.normalized()
+        self.recentItemNames = Self.loadRecentItems()
+        self.displayedItems = Self.orderItems(items: items, recentNames: self.recentItemNames)
         let storedLog = logStore.log(for: Date())
         self.totalSugarGrams = storedLog.grams
         self.logCount = storedLog.count
@@ -80,6 +85,7 @@ final class SugarMeterViewModel: ObservableObject {
 
     func logSugar(_ item: SugarItem, size: SugarItemSize) {
         ensureDailyReset()
+        updateRecents(with: item)
         withAnimation(.easeInOut(duration: 0.6)) {
             totalSugarGrams += grams(for: item, size: size)
             logCount += 1
@@ -171,6 +177,37 @@ final class SugarMeterViewModel: ObservableObject {
         UserDefaults.standard.set(startOfDay, forKey: lastResetKey)
     }
 
+    private func updateRecents(with item: SugarItem) {
+        recentItemNames.removeAll { $0 == item.storageKey }
+        recentItemNames.insert(item.storageKey, at: 0)
+        let validNames = Set(items.map { $0.storageKey })
+        recentItemNames = recentItemNames.filter { validNames.contains($0) }
+        saveRecentItems(recentItemNames)
+        displayedItems = Self.orderItems(items: items, recentNames: recentItemNames)
+    }
+
+    private static func orderItems(items: [SugarItem], recentNames: [String]) -> [SugarItem] {
+        var remaining = items
+        var ordered: [SugarItem] = []
+
+        for name in recentNames {
+            if let index = remaining.firstIndex(where: { $0.storageKey == name }) {
+                ordered.append(remaining.remove(at: index))
+            }
+        }
+
+        ordered.append(contentsOf: remaining)
+        return ordered
+    }
+
+    private static func loadRecentItems() -> [String] {
+        UserDefaults.standard.stringArray(forKey: recentItemsKey) ?? []
+    }
+
+    private func saveRecentItems(_ names: [String]) {
+        UserDefaults.standard.set(names, forKey: Self.recentItemsKey)
+    }
+
     deinit {
         resetTimer?.invalidate()
     }
@@ -178,9 +215,9 @@ final class SugarMeterViewModel: ObservableObject {
 
 extension SugarMeterViewModel {
     static let defaultItems: [SugarItem] = [
-        SugarItem(name: "Donut", sugarGrams: 22),
-        SugarItem(name: "Can of Soda", sugarGrams: 39),
-        SugarItem(name: "Chocolate Bar", sugarGrams: 24),
+        SugarItem(name: "Donut", sugarGrams: 22, imageName: "donut"),
+        SugarItem(name: "Can of Soda", sugarGrams: 39, imageName: "soda"),
+        SugarItem(name: "Chocolate Bar", sugarGrams: 24, imageName: "chocolate-bar"),
         SugarItem(name: "Ice Cream Scoop", sugarGrams: 15),
         SugarItem(name: "Cookie", sugarGrams: 12),
         SugarItem(name: "Energy Drink", sugarGrams: 27),

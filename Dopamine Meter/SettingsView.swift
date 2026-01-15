@@ -5,17 +5,15 @@ struct SettingsView: View {
     @EnvironmentObject private var musicPlayer: BackgroundMusicPlayer
     var onReset: () -> Void = {}
     @AppStorage("dailySugarLimit") private var dailySugarLimit = 36
-    @AppStorage("thresholdMultiplierL2") private var thresholdMultiplierL2 = 1.0
-    @AppStorage("thresholdMultiplierL3") private var thresholdMultiplierL3 = 2.0
-    @AppStorage("thresholdMultiplierL4") private var thresholdMultiplierL4 = 4.0
-    @AppStorage("thresholdMultiplierL5") private var thresholdMultiplierL5 = 5.0
     @AppStorage("musicVolume") private var musicVolume = 0.7
+    @State private var limitSelection: DailyLimitOption = .balanced
+    @State private var customLimitText: String = ""
 
     var body: some View {
         NavigationStack {
             Form {
                 musicSection
-                thresholdSection
+                dailyLimitSection
                 resetSection
             }
             .navigationTitle("Settings")
@@ -28,20 +26,15 @@ struct SettingsView: View {
             }
         }
         .onAppear {
-            normalizeThresholds()
             musicPlayer.volume = musicVolume
+            limitSelection = DailyLimitOption.selection(for: dailySugarLimit)
+            customLimitText = "\(dailySugarLimit)"
         }
-        .onChange(of: thresholdMultiplierL2) { _, _ in
-            normalizeThresholds()
+        .onChange(of: limitSelection) { _, newValue in
+            applyDailyLimitSelection(newValue)
         }
-        .onChange(of: thresholdMultiplierL3) { _, _ in
-            normalizeThresholds()
-        }
-        .onChange(of: thresholdMultiplierL4) { _, _ in
-            normalizeThresholds()
-        }
-        .onChange(of: thresholdMultiplierL5) { _, _ in
-            normalizeThresholds()
+        .onChange(of: customLimitText) { _, newValue in
+            updateCustomLimit(from: newValue)
         }
     }
 
@@ -88,40 +81,30 @@ struct SettingsView: View {
     }
 
     @ViewBuilder
-    private var thresholdSection: some View {
+    private var dailyLimitSection: some View {
         Section {
-            ThresholdSliderRow(
-                title: "L2 - Caution",
-                value: $thresholdMultiplierL2,
-                limit: dailySugarLimit,
-                color: SugarLevel.l2.color,
-                range: 1...6
-            )
-            ThresholdSliderRow(
-                title: "L3 - Warning",
-                value: $thresholdMultiplierL3,
-                limit: dailySugarLimit,
-                color: SugarLevel.l3.color,
-                range: 1...8
-            )
-            ThresholdSliderRow(
-                title: "L4 - High",
-                value: $thresholdMultiplierL4,
-                limit: dailySugarLimit,
-                color: SugarLevel.l4.color,
-                range: 1...10
-            )
-            ThresholdSliderRow(
-                title: "L5 - OMG",
-                value: $thresholdMultiplierL5,
-                limit: dailySugarLimit,
-                color: SugarLevel.l5.color,
-                range: 1...12
-            )
+            Picker("Baseline", selection: $limitSelection) {
+                ForEach(DailyLimitOption.allCases) { option in
+                    Text(option.title)
+                        .tag(option)
+                }
+            }
+            .pickerStyle(.segmented)
+
+            if limitSelection == .custom {
+                HStack {
+                    Text("Custom grams")
+                    Spacer()
+                    TextField("Enter grams", text: $customLimitText)
+                        .keyboardType(.numberPad)
+                        .multilineTextAlignment(.trailing)
+                        .frame(width: 90)
+                }
+            }
         } header: {
-            Text("Thresholds")
+            Text("Daily Target")
         } footer: {
-            Text("Thresholds are multipliers of your daily limit.")
+            Text("Baseline sets the recommended max. Levels scale from it.")
                 .foregroundStyle(AppTheme.textSecondary)
         }
     }
@@ -142,50 +125,57 @@ struct SettingsView: View {
         }
     }
 
-    private func normalizeThresholds() {
-        if thresholdMultiplierL2 < 1 {
-            thresholdMultiplierL2 = 1
+    private func applyDailyLimitSelection(_ selection: DailyLimitOption) {
+        if let limit = selection.limit {
+            dailySugarLimit = limit
+            customLimitText = "\(limit)"
         }
-        if thresholdMultiplierL3 < thresholdMultiplierL2 {
-            thresholdMultiplierL3 = thresholdMultiplierL2
-        }
-        if thresholdMultiplierL4 < thresholdMultiplierL3 {
-            thresholdMultiplierL4 = thresholdMultiplierL3
-        }
-        if thresholdMultiplierL5 < thresholdMultiplierL4 {
-            thresholdMultiplierL5 = thresholdMultiplierL4
-        }
+    }
+
+    private func updateCustomLimit(from text: String) {
+        guard limitSelection == .custom else { return }
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let value = Int(trimmed), value > 0 else { return }
+        dailySugarLimit = value
     }
 }
 
-private struct ThresholdSliderRow: View {
-    let title: String
-    @Binding var value: Double
-    let limit: Int
-    let color: Color
-    let range: ClosedRange<Double>
-    private let step = 0.25
+private enum DailyLimitOption: String, CaseIterable, Identifiable {
+    case balanced
+    case strict
+    case custom
 
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 8) {
-                Circle()
-                    .fill(color)
-                    .frame(width: 8, height: 8)
-                Text(title)
-                Spacer()
-                Text("\(value, specifier: "%.2f")x")
-                    .foregroundStyle(AppTheme.textSecondary)
-            }
-            Text("\(gramsForLimit())g boundary")
-                .font(.footnote)
-                .foregroundStyle(AppTheme.textSecondary)
-            Slider(value: $value, in: range, step: step)
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .balanced:
+            return "36g"
+        case .strict:
+            return "22g"
+        case .custom:
+            return "Custom"
         }
-        .padding(.vertical, 4)
     }
 
-    private func gramsForLimit() -> Int {
-        Int((Double(limit) * value).rounded())
+    var limit: Int? {
+        switch self {
+        case .balanced:
+            return 36
+        case .strict:
+            return 22
+        case .custom:
+            return nil
+        }
+    }
+
+    static func selection(for limit: Int) -> DailyLimitOption {
+        if limit == 36 {
+            return .balanced
+        }
+        if limit == 22 {
+            return .strict
+        }
+        return .custom
     }
 }

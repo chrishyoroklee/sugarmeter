@@ -56,11 +56,21 @@ private struct SugarPickerItemCard: View {
                                 .stroke(isSelected ? AppTheme.primary : AppTheme.primary.opacity(0.35), lineWidth: 1)
                         )
 
-                    Text(item.name)
-                        .font(.custom("AvenirNext-DemiBold", size: 14))
-                        .foregroundStyle(AppTheme.textPrimary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 8)
+                    VStack(spacing: 6) {
+                        if let imageName = item.imageName {
+                            Image(imageName)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(height: 46)
+                                .shadow(color: AppTheme.textPrimary.opacity(0.15), radius: 4, x: 0, y: 2)
+                        }
+
+                        Text(item.name)
+                            .font(.custom("AvenirNext-DemiBold", size: 13))
+                            .foregroundStyle(AppTheme.textPrimary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 8)
+                    }
                 }
                 .frame(width: 100, height: 100)
 

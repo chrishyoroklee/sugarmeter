@@ -4,6 +4,17 @@ struct SugarItem: Identifiable, Equatable {
     let id = UUID()
     let name: String
     let sugarGrams: Int
+    let imageName: String?
+
+    init(name: String, sugarGrams: Int, imageName: String? = nil) {
+        self.name = name
+        self.sugarGrams = sugarGrams
+        self.imageName = imageName
+    }
+
+    var storageKey: String {
+        name
+    }
 }
 
 enum SugarItemSize: String, CaseIterable, Identifiable {
