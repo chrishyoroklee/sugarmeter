@@ -9,6 +9,9 @@ import SwiftUI
 
 struct ContentView: View {
     @StateObject private var viewModel = SugarMeterViewModel()
+    @EnvironmentObject private var musicPlayer: BackgroundMusicPlayer
+    @State private var isSettingsPresented = false
+    @StateObject private var sfxPlayer = SoundEffectPlayer(soundName: "SFX1.wav")
 
     private var fillLevel: Double {
         viewModel.fillLevel
@@ -60,15 +63,19 @@ struct ContentView: View {
 
                     Menu {
                         Button("Donut") {
+                            sfxPlayer.play()
                             viewModel.logSugar(.donut)
                         }
                         Button("Candy") {
+                            sfxPlayer.play()
                             viewModel.logSugar(.candy)
                         }
                         Button("Boba") {
+                            sfxPlayer.play()
                             viewModel.logSugar(.boba)
                         }
                         Button("Chocolate") {
+                            sfxPlayer.play()
                             viewModel.logSugar(.chocolate)
                         }
                     } label: {
@@ -90,6 +97,7 @@ struct ContentView: View {
                     .opacity(viewModel.isFull ? 0.6 : 1)
 
                     Button {
+                        sfxPlayer.play()
                         viewModel.reset()
                     } label: {
                         Text("Reset")
@@ -105,6 +113,28 @@ struct ContentView: View {
                 }
             }
             .padding()
+        }
+        .overlay(alignment: .topTrailing) {
+            Button {
+                sfxPlayer.play()
+                isSettingsPresented = true
+            } label: {
+                Image(systemName: "gearshape.fill")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundStyle(Color(red: 0.2, green: 0.18, blue: 0.18))
+                    .padding(10)
+                    .background(
+                        Circle()
+                            .fill(Color.white.opacity(0.85))
+                            .shadow(color: Color.black.opacity(0.12), radius: 6, x: 0, y: 3)
+                    )
+            }
+            .padding(.top, 12)
+            .padding(.trailing, 16)
+        }
+        .sheet(isPresented: $isSettingsPresented) {
+            SettingsView()
+                .environmentObject(musicPlayer)
         }
     }
 }
