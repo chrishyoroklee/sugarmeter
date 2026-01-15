@@ -116,20 +116,6 @@ struct ContentView: View {
                         )
                     }
 
-                    Button {
-                        sfxPlayer.play()
-                        viewModel.reset()
-                    } label: {
-                        Text("Reset")
-                            .font(.custom("AvenirNext-Medium", size: 14))
-                            .foregroundStyle(AppTheme.textSecondary)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
-                            .background(
-                                Capsule()
-                                    .stroke(AppTheme.border, lineWidth: 1)
-                            )
-                    }
                 }
             }
             .padding()
@@ -153,13 +139,16 @@ struct ContentView: View {
             .padding(.trailing, 16)
         }
         .sheet(isPresented: $isSettingsPresented) {
-            SettingsView()
+            SettingsView(onReset: {
+                sfxPlayer.play()
+                viewModel.reset()
+            })
                 .environmentObject(musicPlayer)
         }
         .sheet(isPresented: $isLogSugarPresented) {
-            LogSugarView(items: viewModel.items) { item in
+            LogSugarView(items: viewModel.items) { item, size in
                 sfxPlayer.play()
-                viewModel.logSugar(item)
+                viewModel.logSugar(item, size: size)
             }
         }
         .overlay {

@@ -3,6 +3,7 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var musicPlayer: BackgroundMusicPlayer
+    var onReset: () -> Void = {}
     @AppStorage("dailySugarLimit") private var dailySugarLimit = 36
     @AppStorage("thresholdMultiplierL2") private var thresholdMultiplierL2 = 1.0
     @AppStorage("thresholdMultiplierL3") private var thresholdMultiplierL3 = 2.0
@@ -15,6 +16,7 @@ struct SettingsView: View {
             Form {
                 musicSection
                 thresholdSection
+                resetSection
             }
             .navigationTitle("Settings")
             .toolbar {
@@ -120,6 +122,22 @@ struct SettingsView: View {
             Text("Thresholds")
         } footer: {
             Text("Thresholds are multipliers of your daily limit.")
+                .foregroundStyle(AppTheme.textSecondary)
+        }
+    }
+
+    @ViewBuilder
+    private var resetSection: some View {
+        Section {
+            Button {
+                onReset()
+            } label: {
+                Text("Reset Daily Log")
+                    .font(.custom("AvenirNext-DemiBold", size: 15))
+                    .foregroundStyle(AppTheme.primary)
+            }
+        } footer: {
+            Text("Clears today's sugar total and level.")
                 .foregroundStyle(AppTheme.textSecondary)
         }
     }

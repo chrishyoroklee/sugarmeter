@@ -2,8 +2,9 @@ import SwiftUI
 
 struct LogSugarView: View {
     let items: [SugarItem]
-    var onSelect: (SugarItem) -> Void
+    var onSelect: (SugarItem, SugarItemSize) -> Void
     @Environment(\.dismiss) private var dismiss
+    @State private var expandedItemID: UUID?
 
     private let columns = [
         GridItem(.flexible(), spacing: 16),
@@ -53,10 +54,19 @@ struct LogSugarView: View {
                 ScrollView {
                     LazyVGrid(columns: columns, spacing: 18) {
                         ForEach(items) { item in
-                            LogSugarItemCard(item: item) {
-                                onSelect(item)
-                                dismiss()
-                            }
+                            LogSugarItemCard(
+                                item: item,
+                                isExpanded: expandedItemID == item.id,
+                                onExpand: {
+                                    withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+                                        expandedItemID = expandedItemID == item.id ? nil : item.id
+                                    }
+                                },
+                                onSelect: { size in
+                                    onSelect(item, size)
+                                    dismiss()
+                                }
+                            )
                         }
                     }
                     .padding(.top, 8)
@@ -70,11 +80,13 @@ struct LogSugarView: View {
 
 private struct LogSugarItemCard: View {
     let item: SugarItem
-    var onTap: () -> Void
+    let isExpanded: Bool
+    var onExpand: () -> Void
+    var onSelect: (SugarItemSize) -> Void
 
     var body: some View {
-        Button(action: onTap) {
-            VStack(spacing: 10) {
+        VStack(spacing: 10) {
+            Button(action: onExpand) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 18, style: .continuous)
                         .fill(AppTheme.secondary.opacity(0.7))
@@ -90,12 +102,48 @@ private struct LogSugarItemCard: View {
                         .padding(.horizontal, 10)
                 }
                 .aspectRatio(1, contentMode: .fit)
+            }
+            .buttonStyle(.plain)
 
-                Text("\(item.sugarGrams)g")
-                    .font(.custom("AvenirNext-Medium", size: 13))
-                    .foregroundStyle(AppTheme.textSecondary)
+            Text("\(item.sugarGrams)g")
+                .font(.custom("AvenirNext-Medium", size: 13))
+                .foregroundStyle(AppTheme.textSecondary)
+
+            if isExpanded {
+                VStack(spacing: 8) {
+                    Text("Pick a size")
+                        .font(.custom("AvenirNext-Medium", size: 12))
+                        .foregroundStyle(AppTheme.textSecondary)
+
+                    HStack(spacing: 6) {
+                        ForEach(SugarItemSize.allCases) { size in
+                            Button {
+                                onSelect(size)
+                            } label: {
+                                VStack(spacing: 2) {
+                                    Text(size.shortLabel)
+                                        .font(.custom("AvenirNext-DemiBold", size: 12))
+                                    Text("\(grams(for: size))g")
+                                        .font(.custom("AvenirNext-Medium", size: 10))
+                                }
+                                .foregroundStyle(AppTheme.textPrimary)
+                                .padding(.vertical, 6)
+                                .frame(maxWidth: .infinity)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                        .fill(AppTheme.primaryLight.opacity(0.6))
+                                )
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+                .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
-        .buttonStyle(.plain)
+    }
+
+    private func grams(for size: SugarItemSize) -> Int {
+        Int((Double(item.sugarGrams) * size.multiplier).rounded())
     }
 }

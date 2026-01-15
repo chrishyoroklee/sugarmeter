@@ -5,3 +5,44 @@ struct SugarItem: Identifiable, Equatable {
     let name: String
     let sugarGrams: Int
 }
+
+enum SugarItemSize: String, CaseIterable, Identifiable {
+    case small
+    case medium
+    case large
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .small:
+            return "Small"
+        case .medium:
+            return "Medium"
+        case .large:
+            return "Large"
+        }
+    }
+
+    var shortLabel: String {
+        switch self {
+        case .small:
+            return "S"
+        case .medium:
+            return "M"
+        case .large:
+            return "L"
+        }
+    }
+
+    var multiplier: Double {
+        switch self {
+        case .small:
+            return 0.75
+        case .medium:
+            return 1.0
+        case .large:
+            return 1.25
+        }
+    }
+}

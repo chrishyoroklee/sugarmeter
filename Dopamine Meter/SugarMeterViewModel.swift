@@ -71,9 +71,13 @@ final class SugarMeterViewModel: ObservableObject {
     }
 
     func logSugar(_ item: SugarItem) {
+        logSugar(item, size: .medium)
+    }
+
+    func logSugar(_ item: SugarItem, size: SugarItemSize) {
         ensureDailyReset()
         withAnimation(.easeInOut(duration: 0.6)) {
-            totalSugarGrams += item.sugarGrams
+            totalSugarGrams += grams(for: item, size: size)
             logCount += 1
         }
         notifyLevelIfNeeded()
@@ -94,6 +98,10 @@ final class SugarMeterViewModel: ObservableObject {
     func updateThresholdMultipliers(_ multipliers: ThresholdMultipliers) {
         thresholdMultipliers = multipliers.normalized()
         lastNotifiedLevel = currentLevel
+    }
+
+    private func grams(for item: SugarItem, size: SugarItemSize) -> Int {
+        Int((Double(item.sugarGrams) * size.multiplier).rounded())
     }
 
     func clearLevelMessage() {
