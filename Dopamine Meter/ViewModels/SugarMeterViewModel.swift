@@ -218,12 +218,12 @@ extension SugarMeterViewModel {
         SugarItem(name: "Donut", sugarGrams: 22, imageName: "donut"),
         SugarItem(name: "Can of Soda", sugarGrams: 39, imageName: "soda"),
         SugarItem(name: "Chocolate Bar", sugarGrams: 24, imageName: "chocolate-bar"),
-        SugarItem(name: "Ice Cream Scoop", sugarGrams: 15),
-        SugarItem(name: "Cookie", sugarGrams: 12),
-        SugarItem(name: "Energy Drink", sugarGrams: 27),
-        SugarItem(name: "Bowl of Cereal", sugarGrams: 20),
-        SugarItem(name: "Frappuccino", sugarGrams: 45),
-        SugarItem(name: "Candy Pack", sugarGrams: 30),
-        SugarItem(name: "Juice Box", sugarGrams: 18)
+        SugarItem(name: "Ice Cream Scoop", sugarGrams: 15, imageName: "ice-cream"),
+        SugarItem(name: "Cookie", sugarGrams: 12, imageName: "cookie"),
+        SugarItem(name: "Energy Drink", sugarGrams: 27, imageName: "energy-drink"),
+        SugarItem(name: "Bowl of Cereal", sugarGrams: 20, imageName: "cereal"),
+        SugarItem(name: "Frappuccino", sugarGrams: 45, imageName: "frappucino"),
+        SugarItem(name: "Candy Pack", sugarGrams: 30, imageName: "candy"),
+        SugarItem(name: "Juice Box", sugarGrams: 18, imageName: "juice-box")
     ]
 }
