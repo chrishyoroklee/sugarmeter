@@ -164,22 +164,22 @@ struct ContentView: View {
             viewModel.startDailyResetTimer()
             viewModel.updateThresholdMultipliers(currentThresholdMultipliers())
         }
-        .onChange(of: storedDailyLimit) { newValue in
+        .onChange(of: storedDailyLimit) { _, newValue in
             viewModel.updateDailyLimit(newValue)
         }
-        .onChange(of: thresholdMultiplierL2) { _ in
+        .onChange(of: thresholdMultiplierL2) { _, _ in
             viewModel.updateThresholdMultipliers(currentThresholdMultipliers())
         }
-        .onChange(of: thresholdMultiplierL3) { _ in
+        .onChange(of: thresholdMultiplierL3) { _, _ in
             viewModel.updateThresholdMultipliers(currentThresholdMultipliers())
         }
-        .onChange(of: thresholdMultiplierL4) { _ in
+        .onChange(of: thresholdMultiplierL4) { _, _ in
             viewModel.updateThresholdMultipliers(currentThresholdMultipliers())
         }
-        .onChange(of: thresholdMultiplierL5) { _ in
+        .onChange(of: thresholdMultiplierL5) { _, _ in
             viewModel.updateThresholdMultipliers(currentThresholdMultipliers())
         }
-        .onChange(of: scenePhase) { newPhase in
+        .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {
                 viewModel.ensureDailyReset()
                 viewModel.startDailyResetTimer()

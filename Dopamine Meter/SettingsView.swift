@@ -31,16 +31,16 @@ struct SettingsView: View {
             normalizeThresholds()
             musicPlayer.volume = musicVolume
         }
-        .onChange(of: thresholdMultiplierL2) { _ in
+        .onChange(of: thresholdMultiplierL2) { _, _ in
             normalizeThresholds()
         }
-        .onChange(of: thresholdMultiplierL3) { _ in
+        .onChange(of: thresholdMultiplierL3) { _, _ in
             normalizeThresholds()
         }
-        .onChange(of: thresholdMultiplierL4) { _ in
+        .onChange(of: thresholdMultiplierL4) { _, _ in
             normalizeThresholds()
         }
-        .onChange(of: thresholdMultiplierL5) { _ in
+        .onChange(of: thresholdMultiplierL5) { _, _ in
             normalizeThresholds()
         }
     }

@@ -54,15 +54,31 @@ struct OnboardingWelcomeView: View {
                 Text("Welcome")
                     .font(.custom("AvenirNext-Heavy", size: 34))
                     .foregroundStyle(AppTheme.textPrimary)
-                Text("Track added sugar easily")
-                    .font(.custom("AvenirNext-Medium", size: 16))
-                    .foregroundStyle(AppTheme.textSecondary)
             }
 
-            Image(systemName: "cup.and.saucer.fill")
-                .font(.system(size: 72, weight: .semibold))
-                .foregroundStyle(AppTheme.primary)
-                .padding(.top, 8)
+            HStack(alignment: .top, spacing: 12) {
+                Image("sugapanda")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 110, height: 110)
+                    .shadow(color: AppTheme.textPrimary.opacity(0.2), radius: 10, x: 0, y: 6)
+
+                Text("Track added sugar easily")
+                    .font(.custom("AvenirNext-Medium", size: 15))
+                    .foregroundStyle(AppTheme.textSecondary)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 14)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(AppTheme.secondary.opacity(0.8))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                    .stroke(AppTheme.primary.opacity(0.5), lineWidth: 1)
+                            )
+                    )
+                    .frame(maxWidth: 180, alignment: .leading)
+            }
+            .padding(.top, 8)
 
             Spacer()
 
@@ -98,6 +114,28 @@ struct OnboardingStyleView: View {
 //                Text("Optional but powerful")
 //                    .font(.custom("AvenirNext-Medium", size: 14))
 //                    .foregroundStyle(AppTheme.textSecondary)
+            }
+
+            HStack(alignment: .top, spacing: 12) {
+                Image("sugapanda")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 90, height: 90)
+                    .shadow(color: AppTheme.textPrimary.opacity(0.18), radius: 8, x: 0, y: 4)
+
+                Text("Optional but powerful")
+                    .font(.custom("AvenirNext-Medium", size: 13))
+                    .foregroundStyle(AppTheme.textSecondary)
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .fill(AppTheme.secondary.opacity(0.8))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                    .stroke(AppTheme.primary.opacity(0.5), lineWidth: 1)
+                            )
+                    )
             }
 
             VStack(spacing: 12) {
