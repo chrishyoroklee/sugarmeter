@@ -42,10 +42,10 @@ struct ContentView: View {
 
             VStack(spacing: 20) {
                 VStack(spacing: 6) {
-                    Text("Sugar Meter")
+                    Text("SugarMetre")
                         .font(.custom("AvenirNext-Heavy", size: 34))
                         .foregroundStyle(Color(red: 0.2, green: 0.18, blue: 0.18))
-                    Text("Every log sweetens the cup")
+                    Text("Track your sugar!")
                         .font(.custom("AvenirNext-Medium", size: 14))
                         .foregroundStyle(Color(red: 0.35, green: 0.32, blue: 0.32))
                 }
@@ -58,39 +58,36 @@ struct ContentView: View {
                         .font(.custom("AvenirNext-DemiBold", size: 16))
                         .foregroundStyle(Color(red: 0.32, green: 0.28, blue: 0.26))
 
-                    HStack(spacing: 12) {
-                        Button {
+                    Menu {
+                        Button("Donut") {
                             viewModel.logSugar(.donut)
-                        } label: {
-                            Text("Log Donut")
-                                .font(.custom("AvenirNext-DemiBold", size: 16))
-                                .foregroundStyle(.white)
-                                .padding(.horizontal, 20)
-                                .padding(.vertical, 12)
-                                .background(
-                                    Capsule()
-                                        .fill(Color(red: 0.93, green: 0.45, blue: 0.2))
-                                )
                         }
-                        .disabled(viewModel.isFull)
-                        .opacity(viewModel.isFull ? 0.6 : 1)
-
-                        Button {
+                        Button("Candy") {
                             viewModel.logSugar(.candy)
-                        } label: {
-                            Text("Log Candy")
-                                .font(.custom("AvenirNext-DemiBold", size: 16))
-                                .foregroundStyle(Color(red: 0.62, green: 0.26, blue: 0.14))
-                                .padding(.horizontal, 20)
-                                .padding(.vertical, 12)
-                                .background(
-                                    Capsule()
-                                        .fill(Color(red: 0.98, green: 0.82, blue: 0.65))
-                                )
                         }
-                        .disabled(viewModel.isFull)
-                        .opacity(viewModel.isFull ? 0.6 : 1)
+                        Button("Boba") {
+                            viewModel.logSugar(.boba)
+                        }
+                        Button("Chocolate") {
+                            viewModel.logSugar(.chocolate)
+                        }
+                    } label: {
+                        HStack(spacing: 8) {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.system(size: 18, weight: .bold))
+                            Text("Log Sugar")
+                                .font(.custom("AvenirNext-DemiBold", size: 16))
+                        }
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 22)
+                        .padding(.vertical, 12)
+                        .background(
+                            Capsule()
+                                .fill(Color(red: 0.93, green: 0.45, blue: 0.2))
+                        )
                     }
+                    .disabled(viewModel.isFull)
+                    .opacity(viewModel.isFull ? 0.6 : 1)
 
                     Button {
                         viewModel.reset()

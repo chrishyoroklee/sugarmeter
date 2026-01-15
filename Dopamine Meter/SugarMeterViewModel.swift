@@ -3,6 +3,21 @@ import SwiftUI
 enum SugarLogType {
     case donut
     case candy
+    case boba
+    case chocolate
+
+    var label: String {
+        switch self {
+        case .donut:
+            return "Donut"
+        case .candy:
+            return "Candy"
+        case .boba:
+            return "Boba"
+        case .chocolate:
+            return "Chocolate"
+        }
+    }
 
     var increment: Int {
         1
