@@ -6,6 +6,7 @@ struct CalendarView: View {
     @State private var selectedMonth = Calendar.current.component(.month, from: Date())
     @State private var loggedDateKeys: Set<String> = []
     @State private var selectedLog: DayLogSelection?
+    @AppStorage(AppGroup.unitKey, store: AppGroup.userDefaults) private var sugarUnitRaw = SugarUnit.grams.rawValue
 
     private let store = DailySugarLogStore()
     private let calendar = Calendar.current
@@ -219,7 +220,7 @@ struct CalendarView: View {
                         .font(.custom("AvenirNext-DemiBold", size: 13))
                         .foregroundStyle(AppTheme.textPrimary)
 
-                    Text("Total sugar: \(selection.grams)g")
+                    Text("Total sugar: \(sugarUnit.formattedWithUnit(from: selection.grams))")
                         .font(.custom("AvenirNext-Medium", size: 12))
                         .foregroundStyle(AppTheme.textSecondary)
                 }
@@ -244,6 +245,10 @@ struct CalendarView: View {
 
     private func formattedDate(_ date: Date) -> String {
         Self.selectionFormatter.string(from: date)
+    }
+
+    private var sugarUnit: SugarUnit {
+        SugarUnit(rawValue: sugarUnitRaw) ?? .grams
     }
 
     private var currentStreak: Int {

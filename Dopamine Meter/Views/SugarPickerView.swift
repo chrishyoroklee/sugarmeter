@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SugarPickerView: View {
     let items: [SugarItem]
+    let unit: SugarUnit
     var onSelect: (SugarItem, SugarItemSize) -> Void
     var onAddCustom: (String, Int) -> Void
     var onRemoveCustom: (SugarItem) -> Void
@@ -21,7 +22,8 @@ struct SugarPickerView: View {
                             onLongPress: {
                                 guard item.isCustom else { return }
                                 itemPendingRemoval = item
-                            }
+                            },
+                            unit: unit
                         ) {
                             withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
                                 selectedItem = item
@@ -43,7 +45,7 @@ struct SugarPickerView: View {
         .sheet(item: $selectedItem, onDismiss: {
             selectedItem = nil
         }) { item in
-            SugarPickerSizeSheet(item: item) { size in
+            SugarPickerSizeSheet(item: item, unit: unit) { size in
                 onSelect(item, size)
             }
             .presentationDetents([.height(220)])
@@ -51,7 +53,8 @@ struct SugarPickerView: View {
         }
         .sheet(isPresented: $isAddCustomPresented) {
             CustomTreatForm(
-                existingNames: Set(items.map { $0.name.lowercased() })
+                existingNames: Set(items.map { $0.name.lowercased() }),
+                unit: unit
             ) { name, grams in
                 onAddCustom(name, grams)
             }
@@ -83,6 +86,7 @@ private struct SugarPickerItemCard: View {
     let item: SugarItem
     let isSelected: Bool
     var onLongPress: () -> Void
+    let unit: SugarUnit
     var onTap: () -> Void
 
     var body: some View {
@@ -113,7 +117,7 @@ private struct SugarPickerItemCard: View {
             }
             .frame(width: 100, height: 100)
 
-            Text("\(item.sugarGrams)g")
+            Text(unit.formattedWithUnit(from: item.sugarGrams))
                 .font(.custom("AvenirNext-Medium", size: 12))
                 .foregroundStyle(AppTheme.textSecondary)
         }
@@ -125,6 +129,7 @@ private struct SugarPickerItemCard: View {
 
 private struct SugarPickerSizeSheet: View {
     let item: SugarItem
+    let unit: SugarUnit
     var onSelect: (SugarItemSize) -> Void
     @Environment(\.dismiss) private var dismiss
 
@@ -143,7 +148,7 @@ private struct SugarPickerSizeSheet: View {
                         VStack(spacing: 4) {
                             Text(size.label)
                                 .font(.custom("AvenirNext-DemiBold", size: 12))
-                            Text("\(grams(for: size))g")
+                            Text(unit.formattedWithUnit(from: grams(for: size)))
                                 .font(.custom("AvenirNext-Medium", size: 10))
                         }
                         .foregroundStyle(AppTheme.textPrimary)
@@ -196,6 +201,7 @@ private struct AddCustomTreatCard: View {
 
 private struct CustomTreatForm: View {
     let existingNames: Set<String>
+    let unit: SugarUnit
     var onSave: (String, Int) -> Void
     @Environment(\.dismiss) private var dismiss
     @State private var nameText = ""
@@ -226,13 +232,13 @@ private struct CustomTreatForm: View {
             }
 
             VStack(alignment: .leading, spacing: 10) {
-                Text("Sugar grams")
+                Text("Sugar amount (\(unit.label))")
                     .font(.custom("AvenirNext-Medium", size: 12))
                     .foregroundStyle(AppTheme.textSecondary)
 
                 Picker("Sugar grams", selection: $selectedGrams) {
                     ForEach(gramOptions, id: \.self) { grams in
-                        Text("\(grams)g")
+                        Text(unit.formattedWithUnit(from: grams))
                             .tag(grams)
                     }
                 }
@@ -240,7 +246,7 @@ private struct CustomTreatForm: View {
                 .frame(maxWidth: .infinity, minHeight: 120)
                 .clipped()
 
-                Text("Selected: \(selectedGrams)g")
+                Text("Selected: \(unit.formattedWithUnit(from: selectedGrams))")
                     .font(.custom("AvenirNext-Medium", size: 12))
                     .foregroundStyle(AppTheme.textSecondary)
                     .frame(maxWidth: .infinity, alignment: .center)
