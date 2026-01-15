@@ -6,6 +6,12 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		403C926F2F19A93200EEC86D /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 403C926E2F19A93200EEC86D /* WidgetKit.framework */; };
+		403C92712F19A93200EEC86D /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 403C92702F19A93200EEC86D /* SwiftUI.framework */; };
+		403C92822F19A93500EEC86D /* SugaMeterWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 403C926C2F19A93200EEC86D /* SugaMeterWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		403C91EF2F184D3C00EEC86D /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -21,13 +27,48 @@
 			remoteGlobalIDString = 403C91DD2F184D3900EEC86D;
 			remoteInfo = "Dopamine Meter";
 		};
+		403C92802F19A93500EEC86D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 403C91D62F184D3900EEC86D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 403C926B2F19A93200EEC86D;
+			remoteInfo = SugaMeterWidgetExtension;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		403C92872F19A93500EEC86D /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				403C92822F19A93500EEC86D /* SugaMeterWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		403C91DE2F184D3900EEC86D /* Dopamine Meter.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Dopamine Meter.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		403C91EE2F184D3C00EEC86D /* Dopamine MeterTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Dopamine MeterTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		403C91F82F184D3C00EEC86D /* Dopamine MeterUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Dopamine MeterUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		403C926C2F19A93200EEC86D /* SugaMeterWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = SugaMeterWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		403C926E2F19A93200EEC86D /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		403C92702F19A93200EEC86D /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		403C92882F19A9FC00EEC86D /* SugaMeterWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SugaMeterWidgetExtension.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		403C92832F19A93500EEC86D /* Exceptions for "SugaMeterWidget" folder in "SugaMeterWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 403C926B2F19A93200EEC86D /* SugaMeterWidgetExtension */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		403C91E02F184D3900EEC86D /* Dopamine Meter */ = {
@@ -43,6 +84,14 @@
 		403C91FB2F184D3C00EEC86D /* Dopamine MeterUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = "Dopamine MeterUITests";
+			sourceTree = "<group>";
+		};
+		403C92722F19A93200EEC86D /* SugaMeterWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				403C92832F19A93500EEC86D /* Exceptions for "SugaMeterWidget" folder in "SugaMeterWidgetExtension" target */,
+			);
+			path = SugaMeterWidget;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -69,15 +118,27 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		403C92692F19A93200EEC86D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				403C92712F19A93200EEC86D /* SwiftUI.framework in Frameworks */,
+				403C926F2F19A93200EEC86D /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		403C91D52F184D3900EEC86D = {
 			isa = PBXGroup;
 			children = (
+				403C92882F19A9FC00EEC86D /* SugaMeterWidgetExtension.entitlements */,
 				403C91E02F184D3900EEC86D /* Dopamine Meter */,
 				403C91F12F184D3C00EEC86D /* Dopamine MeterTests */,
 				403C91FB2F184D3C00EEC86D /* Dopamine MeterUITests */,
+				403C92722F19A93200EEC86D /* SugaMeterWidget */,
+				403C926D2F19A93200EEC86D /* Frameworks */,
 				403C91DF2F184D3900EEC86D /* Products */,
 			);
 			sourceTree = "<group>";
@@ -88,8 +149,18 @@
 				403C91DE2F184D3900EEC86D /* Dopamine Meter.app */,
 				403C91EE2F184D3C00EEC86D /* Dopamine MeterTests.xctest */,
 				403C91F82F184D3C00EEC86D /* Dopamine MeterUITests.xctest */,
+				403C926C2F19A93200EEC86D /* SugaMeterWidgetExtension.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		403C926D2F19A93200EEC86D /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				403C926E2F19A93200EEC86D /* WidgetKit.framework */,
+				403C92702F19A93200EEC86D /* SwiftUI.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -102,10 +173,12 @@
 				403C91DA2F184D3900EEC86D /* Sources */,
 				403C91DB2F184D3900EEC86D /* Frameworks */,
 				403C91DC2F184D3900EEC86D /* Resources */,
+				403C92872F19A93500EEC86D /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				403C92812F19A93500EEC86D /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				403C91E02F184D3900EEC86D /* Dopamine Meter */,
@@ -163,6 +236,28 @@
 			productReference = 403C91F82F184D3C00EEC86D /* Dopamine MeterUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		403C926B2F19A93200EEC86D /* SugaMeterWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 403C92842F19A93500EEC86D /* Build configuration list for PBXNativeTarget "SugaMeterWidgetExtension" */;
+			buildPhases = (
+				403C92682F19A93200EEC86D /* Sources */,
+				403C92692F19A93200EEC86D /* Frameworks */,
+				403C926A2F19A93200EEC86D /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				403C92722F19A93200EEC86D /* SugaMeterWidget */,
+			);
+			name = SugaMeterWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = SugaMeterWidgetExtension;
+			productReference = 403C926C2F19A93200EEC86D /* SugaMeterWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -184,6 +279,9 @@
 						CreatedOnToolsVersion = 16.2;
 						TestTargetID = 403C91DD2F184D3900EEC86D;
 					};
+					403C926B2F19A93200EEC86D = {
+						CreatedOnToolsVersion = 16.2;
+					};
 				};
 			};
 			buildConfigurationList = 403C91D92F184D3900EEC86D /* Build configuration list for PBXProject "Dopamine Meter" */;
@@ -203,6 +301,7 @@
 				403C91DD2F184D3900EEC86D /* Dopamine Meter */,
 				403C91ED2F184D3C00EEC86D /* Dopamine MeterTests */,
 				403C91F72F184D3C00EEC86D /* Dopamine MeterUITests */,
+				403C926B2F19A93200EEC86D /* SugaMeterWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -223,6 +322,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		403C91F62F184D3C00EEC86D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		403C926A2F19A93200EEC86D /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -253,6 +359,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		403C92682F19A93200EEC86D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -265,6 +378,11 @@
 			isa = PBXTargetDependency;
 			target = 403C91DD2F184D3900EEC86D /* Dopamine Meter */;
 			targetProxy = 403C91F92F184D3C00EEC86D /* PBXContainerItemProxy */;
+		};
+		403C92812F19A93500EEC86D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 403C926B2F19A93200EEC86D /* SugaMeterWidgetExtension */;
+			targetProxy = 403C92802F19A93500EEC86D /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -393,6 +511,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Dopamine Meter/Dopamine Meter.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"Dopamine Meter/Preview Content\"";
@@ -425,6 +544,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Dopamine Meter/Dopamine Meter.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"Dopamine Meter/Preview Content\"";
@@ -524,6 +644,62 @@
 			};
 			name = Release;
 		};
+		403C92852F19A93500EEC86D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = SugaMeterWidgetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = DC583QU6ZR;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SugaMeterWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = SugaMeterWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.hyoroklee.sugarmeter.SugaMeterWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		403C92862F19A93500EEC86D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = SugaMeterWidgetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = DC583QU6ZR;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SugaMeterWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = SugaMeterWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.hyoroklee.sugarmeter.SugaMeterWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -559,6 +735,15 @@
 			buildConfigurations = (
 				403C92092F184D3C00EEC86D /* Debug */,
 				403C920A2F184D3C00EEC86D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		403C92842F19A93500EEC86D /* Build configuration list for PBXNativeTarget "SugaMeterWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				403C92852F19A93500EEC86D /* Debug */,
+				403C92862F19A93500EEC86D /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

@@ -74,11 +74,10 @@ struct SugaMeterProvider: TimelineProvider {
     }
 }
 
+@main
 struct SugaMeterWidget: Widget {
-    let kind: String = "SugaMeterWidget"
-
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: kind, provider: SugaMeterProvider()) { entry in
+        StaticConfiguration(kind: "SugaMeterWidget", provider: SugaMeterProvider()) { entry in
             SugaMeterWidgetView(entry: entry)
         }
         .configurationDisplayName("SugaMeter")
@@ -298,18 +297,4 @@ private struct WidgetLogStore {
     private func dateKey(for date: Date) -> String {
         dateFormatter.string(from: date)
     }
-}
-
-#Preview(as: .systemSmall) {
-    SugaMeterWidget()
-} timeline: {
-    SugaMeterEntry(
-        date: .now,
-        totalGrams: 22,
-        dailyLimit: 36,
-        fillFraction: 0.25,
-        progress: 0.6,
-        statusLabel: "In target",
-        statusColor: WidgetTheme.levelGreen
-    )
 }

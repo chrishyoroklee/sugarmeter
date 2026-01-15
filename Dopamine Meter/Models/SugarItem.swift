@@ -5,11 +5,13 @@ struct SugarItem: Identifiable, Equatable {
     let name: String
     let sugarGrams: Int
     let imageName: String?
+    let isCustom: Bool
 
-    init(name: String, sugarGrams: Int, imageName: String? = nil) {
+    init(name: String, sugarGrams: Int, imageName: String? = nil, isCustom: Bool = false) {
         self.name = name
         self.sugarGrams = sugarGrams
         self.imageName = imageName
+        self.isCustom = isCustom
     }
 
     var storageKey: String {

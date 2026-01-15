@@ -4,7 +4,7 @@ struct OnboardingView: View {
     @StateObject private var viewModel = OnboardingViewModel()
     @State private var step = 0
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
-    @AppStorage("dailySugarLimit") private var dailySugarLimit = 36
+    @AppStorage("dailySugarLimit", store: AppGroup.userDefaults) private var dailySugarLimit = 36
     @AppStorage("sugarStyle") private var sugarStyle = SugarStyle.balanced.rawValue
 
     var body: some View {

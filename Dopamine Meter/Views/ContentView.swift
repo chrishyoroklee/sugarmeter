@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ContentView: View {
-    @AppStorage("dailySugarLimit") private var storedDailyLimit = 36
+    @AppStorage("dailySugarLimit", store: AppGroup.userDefaults) private var storedDailyLimit = 36
     @StateObject private var viewModel: SugarMeterViewModel
     @EnvironmentObject private var musicPlayer: BackgroundMusicPlayer
     @Environment(\.scenePhase) private var scenePhase
@@ -17,7 +17,7 @@ struct ContentView: View {
     @StateObject private var sfxPlayer = SoundEffectPlayer(soundName: "SFX1.wav")
 
     init() {
-        let stored = UserDefaults.standard.integer(forKey: "dailySugarLimit")
+        let stored = AppGroup.userDefaults.integer(forKey: AppGroup.dailyLimitKey)
         let limit = stored > 0 ? stored : 36
         _viewModel = StateObject(wrappedValue: SugarMeterViewModel(dailyLimit: limit))
     }
@@ -92,6 +92,12 @@ struct ContentView: View {
                     SugarPickerView(items: viewModel.displayedItems) { item, size in
                         sfxPlayer.play()
                         viewModel.logSugar(item, size: size)
+                    } onAddCustom: { name, grams in
+                        sfxPlayer.play()
+                        viewModel.addCustomItem(name: name, grams: grams)
+                    } onRemoveCustom: { item in
+                        sfxPlayer.play()
+                        viewModel.removeCustomItem(item)
                     }
 
                 }

@@ -6,11 +6,12 @@ struct DailySugarLog: Codable, Equatable {
 }
 
 final class DailySugarLogStore {
-    private let historyKey = "dailySugarLogs"
+    private let historyKey = AppGroup.logHistoryKey
     private let userDefaults: UserDefaults
     private let dateFormatter: DateFormatter
 
-    init(userDefaults: UserDefaults = .standard) {
+    init(userDefaults: UserDefaults = AppGroup.userDefaults) {
+        AppGroup.migrateIfNeeded()
         self.userDefaults = userDefaults
         self.dateFormatter = DateFormatter()
         self.dateFormatter.locale = Locale(identifier: "en_US_POSIX")

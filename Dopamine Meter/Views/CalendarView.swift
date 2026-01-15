@@ -122,17 +122,23 @@ struct CalendarView: View {
     }
 
     private var streakInfo: some View {
-        VStack(spacing: 6) {
-            Text("Current streak")
+        VStack(spacing: 8) {
+            Text("Current Streak")
                 .font(.custom("AvenirNext-DemiBold", size: 14))
                 .foregroundStyle(AppTheme.textPrimary)
 
-            Text("\(currentStreak) day\(currentStreak == 1 ? "" : "s") in a row logged")
-                .font(.custom("AvenirNext-Medium", size: 12))
-                .foregroundStyle(AppTheme.textSecondary)
+            VStack(spacing: 2) {
+                Text("\(currentStreak)")
+                    .font(.custom("AvenirNext-Heavy", size: 28))
+                    .foregroundStyle(AppTheme.primary)
+
+                Text(currentStreak == 1 ? "Day" : "Days")
+                    .font(.custom("AvenirNext-Medium", size: 13))
+                    .foregroundStyle(AppTheme.textSecondary)
+            }
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 12)
+        .padding(.vertical, 16)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(Color.white.opacity(0.7))

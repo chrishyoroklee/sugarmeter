@@ -1,4 +1,7 @@
 import SwiftUI
+#if canImport(WidgetKit)
+import WidgetKit
+#endif
 
 final class SugarMeterViewModel: ObservableObject {
     @Published private(set) var totalSugarGrams: Int = 0
@@ -7,15 +10,18 @@ final class SugarMeterViewModel: ObservableObject {
     @Published var levelMessage: LevelMessage?
     @Published private(set) var thresholdMultipliers: ThresholdMultipliers
     @Published private(set) var displayedItems: [SugarItem]
-    let items: [SugarItem]
+    @Published private(set) var items: [SugarItem]
     let visualCapacityMultiplier: Double
     private let logStore = DailySugarLogStore()
     private let minimumVisualCapacityGrams = 180
     private let lastResetKey = "lastResetDate"
     private static let recentItemsKey = "recentSugarItems"
+    private static let customItemsKey = "customSugarItems"
     private var resetTimer: Timer?
     private var lastNotifiedLevel: SugarLevel = .l1
     private var recentItemNames: [String]
+    private let baseItems: [SugarItem]
+    private var customItems: [CustomSugarItem]
 
     init(
         dailyLimit: Int = 36,
@@ -23,12 +29,20 @@ final class SugarMeterViewModel: ObservableObject {
         visualCapacityMultiplier: Double = 5.0,
         thresholdMultipliers: ThresholdMultipliers = .default
     ) {
+        let baseItems = items
+        let customItems = Self.loadCustomItems()
+        let combinedItems = baseItems + customItems.map { $0.asSugarItem() }
+        let recentNames = Self.loadRecentItems()
+        let orderedItems = Self.orderItems(items: combinedItems, recentNames: recentNames)
+
         self.dailyLimit = max(dailyLimit, 1)
-        self.items = items
+        self.baseItems = baseItems
+        self.customItems = customItems
+        self.items = combinedItems
         self.visualCapacityMultiplier = max(visualCapacityMultiplier, 1)
         self.thresholdMultipliers = thresholdMultipliers.normalized()
-        self.recentItemNames = Self.loadRecentItems()
-        self.displayedItems = Self.orderItems(items: items, recentNames: self.recentItemNames)
+        self.recentItemNames = recentNames
+        self.displayedItems = orderedItems
         let storedLog = logStore.log(for: Date())
         self.totalSugarGrams = storedLog.grams
         self.logCount = storedLog.count
@@ -105,11 +119,34 @@ final class SugarMeterViewModel: ObservableObject {
 
     func updateDailyLimit(_ newLimit: Int) {
         dailyLimit = max(newLimit, 1)
+        reloadWidgets()
     }
 
     func updateThresholdMultipliers(_ multipliers: ThresholdMultipliers) {
         thresholdMultipliers = multipliers.normalized()
         lastNotifiedLevel = currentLevel
+    }
+
+    func addCustomItem(name: String, grams: Int) {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, grams > 0 else { return }
+        let lowercased = trimmed.lowercased()
+        guard !items.contains(where: { $0.storageKey.lowercased() == lowercased }) else { return }
+
+        let customItem = CustomSugarItem(name: trimmed, grams: grams)
+        customItems.append(customItem)
+        saveCustomItems(customItems)
+        items = baseItems + customItems.map { $0.asSugarItem() }
+        refreshDisplayedItems()
+    }
+
+    func removeCustomItem(_ item: SugarItem) {
+        guard item.isCustom else { return }
+        let lowercased = item.storageKey.lowercased()
+        customItems.removeAll { $0.name.lowercased() == lowercased }
+        saveCustomItems(customItems)
+        items = baseItems + customItems.map { $0.asSugarItem() }
+        refreshDisplayedItems()
     }
 
     private func grams(for item: SugarItem, size: SugarItemSize) -> Int {
@@ -122,6 +159,13 @@ final class SugarMeterViewModel: ObservableObject {
 
     private func persistCurrentLog() {
         logStore.saveLog(grams: totalSugarGrams, count: logCount, for: Date())
+        reloadWidgets()
+    }
+
+    private func reloadWidgets() {
+#if canImport(WidgetKit)
+        WidgetCenter.shared.reloadAllTimelines()
+#endif
     }
 
     func ensureDailyReset() {
@@ -180,6 +224,10 @@ final class SugarMeterViewModel: ObservableObject {
     private func updateRecents(with item: SugarItem) {
         recentItemNames.removeAll { $0 == item.storageKey }
         recentItemNames.insert(item.storageKey, at: 0)
+        refreshDisplayedItems()
+    }
+
+    private func refreshDisplayedItems() {
         let validNames = Set(items.map { $0.storageKey })
         recentItemNames = recentItemNames.filter { validNames.contains($0) }
         saveRecentItems(recentItemNames)
@@ -208,8 +256,27 @@ final class SugarMeterViewModel: ObservableObject {
         UserDefaults.standard.set(names, forKey: Self.recentItemsKey)
     }
 
+    private static func loadCustomItems() -> [CustomSugarItem] {
+        guard let data = UserDefaults.standard.data(forKey: customItemsKey) else { return [] }
+        return (try? JSONDecoder().decode([CustomSugarItem].self, from: data)) ?? []
+    }
+
+    private func saveCustomItems(_ items: [CustomSugarItem]) {
+        guard let data = try? JSONEncoder().encode(items) else { return }
+        UserDefaults.standard.set(data, forKey: Self.customItemsKey)
+    }
+
     deinit {
         resetTimer?.invalidate()
+    }
+}
+
+private struct CustomSugarItem: Codable, Equatable {
+    let name: String
+    let grams: Int
+
+    func asSugarItem() -> SugarItem {
+        SugarItem(name: name, sugarGrams: grams, isCustom: true)
     }
 }
 

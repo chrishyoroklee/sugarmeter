@@ -4,17 +4,30 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var musicPlayer: BackgroundMusicPlayer
     var onReset: () -> Void = {}
-    @AppStorage("dailySugarLimit") private var dailySugarLimit = 36
+    @AppStorage("dailySugarLimit", store: AppGroup.userDefaults) private var dailySugarLimit = 36
     @AppStorage("musicVolume") private var musicVolume = 0.7
     @State private var limitSelection: DailyLimitOption = .balanced
     @State private var customLimitText: String = ""
 
     var body: some View {
         NavigationStack {
-            Form {
-                musicSection
-                dailyLimitSection
-                resetSection
+            ZStack {
+                LinearGradient(
+                    colors: [
+                        AppTheme.backgroundTop,
+                        AppTheme.backgroundBottom
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
+
+                Form {
+                    musicSection
+                    dailyLimitSection
+                    resetSection
+                }
+                .scrollContentBackground(.hidden)
             }
             .navigationTitle("Settings")
             .toolbar {
