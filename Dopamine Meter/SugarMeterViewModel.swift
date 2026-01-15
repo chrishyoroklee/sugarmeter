@@ -1,57 +1,56 @@
 import SwiftUI
 
-enum SugarLogType {
-    case donut
-    case candy
-    case boba
-    case chocolate
-
-    var label: String {
-        switch self {
-        case .donut:
-            return "Donut"
-        case .candy:
-            return "Candy"
-        case .boba:
-            return "Boba"
-        case .chocolate:
-            return "Chocolate"
-        }
-    }
-
-    var increment: Int {
-        1
-    }
-}
-
 final class SugarMeterViewModel: ObservableObject {
-    @Published private(set) var sugarLogs: Int = 0
-    let maxLogs: Int
+    @Published private(set) var totalSugarGrams: Int = 0
+    @Published private(set) var logCount: Int = 0
+    @Published private(set) var dailyLimit: Int
+    let items: [SugarItem]
 
-    init(maxLogs: Int = 10) {
-        self.maxLogs = maxLogs
+    init(dailyLimit: Int = 36, items: [SugarItem] = SugarMeterViewModel.defaultItems) {
+        self.dailyLimit = max(dailyLimit, 1)
+        self.items = items
     }
 
     var fillLevel: Double {
-        guard maxLogs > 0 else { return 0 }
-        return min(Double(sugarLogs) / Double(maxLogs), 1.0)
+        guard dailyLimit > 0 else { return 0 }
+        return min(Double(totalSugarGrams) / Double(dailyLimit), 1.0)
     }
 
     var isFull: Bool {
-        sugarLogs >= maxLogs
+        totalSugarGrams >= dailyLimit
     }
 
-    func logSugar(_ type: SugarLogType) {
+    func logSugar(_ item: SugarItem) {
         guard !isFull else { return }
-        let newValue = min(sugarLogs + type.increment, maxLogs)
         withAnimation(.easeInOut(duration: 0.6)) {
-            sugarLogs = newValue
+            totalSugarGrams += item.sugarGrams
+            logCount += 1
         }
     }
 
     func reset() {
         withAnimation(.easeInOut(duration: 0.4)) {
-            sugarLogs = 0
+            totalSugarGrams = 0
+            logCount = 0
         }
     }
+
+    func updateDailyLimit(_ newLimit: Int) {
+        dailyLimit = max(newLimit, 1)
+    }
+}
+
+extension SugarMeterViewModel {
+    static let defaultItems: [SugarItem] = [
+        SugarItem(name: "Donut", sugarGrams: 22),
+        SugarItem(name: "Can of Soda", sugarGrams: 39),
+        SugarItem(name: "Chocolate Bar", sugarGrams: 24),
+        SugarItem(name: "Ice Cream Scoop", sugarGrams: 15),
+        SugarItem(name: "Cookie", sugarGrams: 12),
+        SugarItem(name: "Energy Drink", sugarGrams: 27),
+        SugarItem(name: "Bowl of Cereal", sugarGrams: 20),
+        SugarItem(name: "Frappuccino", sugarGrams: 45),
+        SugarItem(name: "Candy Pack", sugarGrams: 30),
+        SugarItem(name: "Juice Box", sugarGrams: 18)
+    ]
 }

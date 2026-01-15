@@ -8,10 +8,17 @@
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var viewModel = SugarMeterViewModel()
+    @AppStorage("dailySugarLimit") private var storedDailyLimit = 36
+    @StateObject private var viewModel: SugarMeterViewModel
     @EnvironmentObject private var musicPlayer: BackgroundMusicPlayer
     @State private var isSettingsPresented = false
     @StateObject private var sfxPlayer = SoundEffectPlayer(soundName: "SFX1.wav")
+
+    init() {
+        let stored = UserDefaults.standard.integer(forKey: "dailySugarLimit")
+        let limit = stored > 0 ? stored : 36
+        _viewModel = StateObject(wrappedValue: SugarMeterViewModel(dailyLimit: limit))
+    }
 
     private var fillLevel: Double {
         viewModel.fillLevel
@@ -57,26 +64,16 @@ struct ContentView: View {
                     .frame(height: 320)
 
                 VStack(spacing: 10) {
-                    Text("\(viewModel.sugarLogs) sugar logs · \(Int(fillLevel * 100))% full")
+                    Text("\(viewModel.totalSugarGrams)g logged · \(Int(fillLevel * 100))% of \(viewModel.dailyLimit)g")
                         .font(.custom("AvenirNext-DemiBold", size: 16))
                         .foregroundStyle(Color(red: 0.32, green: 0.28, blue: 0.26))
 
                     Menu {
-                        Button("Donut") {
-                            sfxPlayer.play()
-                            viewModel.logSugar(.donut)
-                        }
-                        Button("Candy") {
-                            sfxPlayer.play()
-                            viewModel.logSugar(.candy)
-                        }
-                        Button("Boba") {
-                            sfxPlayer.play()
-                            viewModel.logSugar(.boba)
-                        }
-                        Button("Chocolate") {
-                            sfxPlayer.play()
-                            viewModel.logSugar(.chocolate)
+                        ForEach(viewModel.items) { item in
+                            Button("\(item.name) - \(item.sugarGrams)g") {
+                                sfxPlayer.play()
+                                viewModel.logSugar(item)
+                            }
                         }
                     } label: {
                         HStack(spacing: 8) {
@@ -135,6 +132,9 @@ struct ContentView: View {
         .sheet(isPresented: $isSettingsPresented) {
             SettingsView()
                 .environmentObject(musicPlayer)
+        }
+        .onChange(of: storedDailyLimit) { newValue in
+            viewModel.updateDailyLimit(newValue)
         }
     }
 }

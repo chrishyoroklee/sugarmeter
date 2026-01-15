@@ -20,7 +20,7 @@ struct Dopamine_MeterApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RootView()
                 .environmentObject(musicPlayer)
                 .onAppear {
                     musicPlayer.start()
