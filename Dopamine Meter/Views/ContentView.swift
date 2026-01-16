@@ -92,6 +92,9 @@ struct ContentView: View {
                     SugarPickerView(items: viewModel.displayedItems, libraryItems: viewModel.libraryItems) { item, size in
                         sfxPlayer.play()
                         viewModel.logSugar(item, size: size)
+                    } onSelectCustom: { item, grams in
+                        sfxPlayer.play()
+                        viewModel.logSugar(item, grams: grams)
                     } onAddCustom: { name, grams, category in
                         sfxPlayer.play()
                         viewModel.addCustomItem(name: name, grams: grams, category: category)

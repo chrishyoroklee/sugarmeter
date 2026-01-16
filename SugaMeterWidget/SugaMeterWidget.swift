@@ -115,69 +115,66 @@ struct SugaMeterWidgetView: View {
     @Environment(\.widgetFamily) private var family
 
     var body: some View {
-        switch family {
-        case .systemSmall:
-            smallView
-        case .systemMedium:
-            mediumView
-        case .accessoryCircular:
-            accessoryCircularView
-        case .accessoryRectangular:
-            accessoryRectangularView
-        case .accessoryInline:
-            accessoryInlineView
-        default:
-            smallView
+        Group {
+            switch family {
+            case .systemSmall:
+                smallView
+            case .systemMedium:
+                mediumView
+            case .accessoryCircular:
+                accessoryCircularView
+            case .accessoryRectangular:
+                accessoryRectangularView
+            case .accessoryInline:
+                accessoryInlineView
+            default:
+                smallView
+            }
+        }
+        .containerBackground(for: .widget) {
+            if family == .systemSmall || family == .systemMedium {
+                WidgetBackground()
+            } else {
+                Color.clear
+            }
         }
     }
 
     private var smallView: some View {
-        ZStack {
-            WidgetBackground()
-            VStack(spacing: 10) {
-                Text("SugaMeter")
-                    .font(.custom("AvenirNext-DemiBold", size: 12))
-                    .foregroundStyle(WidgetTheme.textPrimary)
+        VStack(spacing: 10) {
+            Text("SugaMeter")
+                .font(.custom("AvenirNext-DemiBold", size: 12))
+                .foregroundStyle(WidgetTheme.textPrimary)
 
-                WidgetJarView(fillFraction: entry.fillFraction, fillColor: entry.statusColor)
-                    .frame(width: 70, height: 80)
+            WidgetJarView(fillFraction: entry.fillFraction, fillColor: entry.statusColor)
+                .frame(width: 70, height: 80)
 
-                Text("\(entry.totalGrams)g / \(entry.dailyLimit)g")
-                    .font(.custom("AvenirNext-Medium", size: 11))
-                    .foregroundStyle(WidgetTheme.textSecondary)
-            }
-            .padding(12)
+            Text("\(entry.totalGrams)g / \(entry.dailyLimit)g")
+                .font(.custom("AvenirNext-Medium", size: 11))
+                .foregroundStyle(WidgetTheme.textSecondary)
         }
-        .containerBackground(for: .widget) {
-            WidgetBackground()
-        }
+        .padding(12)
     }
 
     private var mediumView: some View {
-        ZStack {
-            WidgetBackground()
-            HStack(spacing: 16) {
-                WidgetJarView(fillFraction: entry.fillFraction, fillColor: entry.statusColor)
-                    .frame(width: 80, height: 90)
+        HStack(spacing: 16) {
+            WidgetJarView(fillFraction: entry.fillFraction, fillColor: entry.statusColor)
+                .frame(width: 80, height: 90)
 
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("SugaMeter")
-                        .font(.custom("AvenirNext-DemiBold", size: 14))
-                        .foregroundStyle(WidgetTheme.textPrimary)
-                    Text("\(entry.totalGrams)g logged")
-                        .font(.custom("AvenirNext-Heavy", size: 18))
-                        .foregroundStyle(entry.statusColor)
-                    Text("Goal \(entry.dailyLimit)g · \(entry.statusLabel)")
-                        .font(.custom("AvenirNext-Medium", size: 12))
-                        .foregroundStyle(WidgetTheme.textSecondary)
-                }
-                Spacer(minLength: 0)
+            VStack(alignment: .leading, spacing: 6) {
+                Text("SugaMeter")
+                    .font(.custom("AvenirNext-DemiBold", size: 14))
+                    .foregroundStyle(WidgetTheme.textPrimary)
+                Text("\(entry.totalGrams)g logged")
+                    .font(.custom("AvenirNext-Heavy", size: 18))
+                    .foregroundStyle(entry.statusColor)
+                Text("Goal \(entry.dailyLimit)g · \(entry.statusLabel)")
+                    .font(.custom("AvenirNext-Medium", size: 12))
+                    .foregroundStyle(WidgetTheme.textSecondary)
             }
-            .padding(16)
+            Spacer(minLength: 0)
         }
-        .containerBackground(for: .widget) {
-            WidgetBackground()
-        }
+        .padding(16)
     }
 
     private var accessoryCircularView: some View {

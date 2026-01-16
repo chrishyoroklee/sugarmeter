@@ -4,6 +4,7 @@ struct SugarPickerView: View {
     let items: [SugarItem]
     let libraryItems: [SugarItem]
     var onSelect: (SugarItem, SugarItemSize) -> Void
+    var onSelectCustom: (SugarItem, Int) -> Void
     var onAddCustom: (String, Int, SugarItemCategory) -> Void
     var onRemoveCustom: (SugarItem) -> Void
 
@@ -70,8 +71,10 @@ struct SugarPickerView: View {
         }) { item in
             SugarPickerSizeSheet(item: item) { size in
                 onSelect(item, size)
+            } onSelectCustom: { grams in
+                onSelectCustom(item, grams)
             }
-            .presentationDetents([.height(220)])
+            .presentationDetents([.height(320)])
             .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $isAddCustomPresented) {
@@ -87,6 +90,7 @@ struct SugarPickerView: View {
             SugarPickerLibraryView(
                 items: libraryItems,
                 onSelect: onSelect,
+                onSelectCustom: onSelectCustom,
                 onAddCustom: onAddCustom,
                 onRemoveCustom: onRemoveCustom
             )
@@ -159,7 +163,20 @@ private struct SugarPickerItemCard: View {
 private struct SugarPickerSizeSheet: View {
     let item: SugarItem
     var onSelect: (SugarItemSize) -> Void
+    var onSelectCustom: (Int) -> Void
     @Environment(\.dismiss) private var dismiss
+    @State private var customGrams: Double
+
+    init(
+        item: SugarItem,
+        onSelect: @escaping (SugarItemSize) -> Void,
+        onSelectCustom: @escaping (Int) -> Void
+    ) {
+        self.item = item
+        self.onSelect = onSelect
+        self.onSelectCustom = onSelectCustom
+        _customGrams = State(initialValue: Double(item.sugarGrams))
+    }
 
     var body: some View {
         VStack(spacing: 16) {
@@ -190,12 +207,47 @@ private struct SugarPickerSizeSheet: View {
                     .buttonStyle(.plain)
                 }
             }
+
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text("Custom")
+                        .font(.custom("AvenirNext-Medium", size: 12))
+                        .foregroundStyle(AppTheme.textSecondary)
+                    Spacer()
+                    Text("\(Int(customGrams))g")
+                        .font(.custom("AvenirNext-DemiBold", size: 12))
+                        .foregroundStyle(AppTheme.textPrimary)
+                }
+
+                Slider(value: $customGrams, in: customRange, step: 1)
+
+                Button {
+                    onSelectCustom(Int(customGrams))
+                    dismiss()
+                } label: {
+                    Text("Log Custom")
+                        .font(.custom("AvenirNext-DemiBold", size: 12))
+                        .foregroundStyle(.white)
+                        .padding(.vertical, 8)
+                        .frame(maxWidth: .infinity)
+                        .background(
+                            Capsule()
+                                .fill(AppTheme.primary)
+                        )
+                }
+                .buttonStyle(.plain)
+            }
         }
         .padding(.horizontal, 20)
     }
 
     private func grams(for size: SugarItemSize) -> Int {
         Int((Double(item.sugarGrams) * size.multiplier).rounded())
+    }
+
+    private var customRange: ClosedRange<Double> {
+        let maxValue = max(Double(item.sugarGrams) * 2.0, 50)
+        return 1...min(maxValue, 120)
     }
 }
 
@@ -340,6 +392,7 @@ private struct CustomTreatForm: View {
 struct SugarPickerLibraryView: View {
     let items: [SugarItem]
     var onSelect: (SugarItem, SugarItemSize) -> Void
+    var onSelectCustom: (SugarItem, Int) -> Void
     var onAddCustom: (String, Int, SugarItemCategory) -> Void
     var onRemoveCustom: (SugarItem) -> Void
     @Environment(\.dismiss) private var dismiss
@@ -430,8 +483,10 @@ struct SugarPickerLibraryView: View {
         }) { item in
             SugarPickerSizeSheet(item: item) { size in
                 handleLibrarySelection(item: item, size: size)
+            } onSelectCustom: { grams in
+                handleLibraryCustomSelection(item: item, grams: grams)
             }
-            .presentationDetents([.height(220)])
+            .presentationDetents([.height(320)])
             .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $isAddCustomPresented) {
@@ -502,6 +557,22 @@ struct SugarPickerLibraryView: View {
 
     private func handleLibrarySelection(item: SugarItem, size: SugarItemSize) {
         onSelect(item, size)
+        confirmationItem = item
+        withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+            showConfirmation = true
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+            withAnimation(.easeOut(duration: 0.2)) {
+                showConfirmation = false
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                dismiss()
+            }
+        }
+    }
+
+    private func handleLibraryCustomSelection(item: SugarItem, grams: Int) {
+        onSelectCustom(item, grams)
         confirmationItem = item
         withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
             showConfirmation = true

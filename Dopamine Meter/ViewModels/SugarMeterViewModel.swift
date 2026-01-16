@@ -120,6 +120,17 @@ final class SugarMeterViewModel: ObservableObject {
         notifyLevelIfNeeded()
     }
 
+    func logSugar(_ item: SugarItem, grams: Int) {
+        ensureDailyReset()
+        updateFeaturedItems(with: item)
+        withAnimation(.easeInOut(duration: 0.6)) {
+            totalSugarGrams += max(grams, 0)
+            logCount += 1
+        }
+        persistCurrentLog()
+        notifyLevelIfNeeded()
+    }
+
     func reset() {
         withAnimation(.easeInOut(duration: 0.4)) {
             totalSugarGrams = 0
@@ -401,14 +412,10 @@ extension SugarMeterViewModel {
             SugarItem(name: "Bubble Tea", sugarGrams: 38, category: .drink),
             SugarItem(name: "Milkshake", sugarGrams: 60, category: .drink),
             SugarItem(name: "Smoothie (Store-bought)", sugarGrams: 40, category: .drink),
-            SugarItem(name: "Chocolate Bar", sugarGrams: 24, category: .candy),
-            SugarItem(name: "Candy Pack", sugarGrams: 30, category: .candy),
             SugarItem(name: "Gummy Candy", sugarGrams: 23, category: .candy),
             SugarItem(name: "Fruit Snacks", sugarGrams: 15, category: .candy),
-            SugarItem(name: "Ice Cream Scoop", sugarGrams: 15, category: .dessert),
             SugarItem(name: "Ice Cream Bar", sugarGrams: 24, category: .dessert),
             SugarItem(name: "Frozen Yogurt", sugarGrams: 30, category: .dessert),
-            SugarItem(name: "Bowl of Cereal", sugarGrams: 20, category: .breakfast),
             SugarItem(name: "Granola Bar", sugarGrams: 14, category: .breakfast),
             SugarItem(name: "Flavored Yogurt", sugarGrams: 18, category: .breakfast),
             SugarItem(name: "Flavored Oatmeal Packet", sugarGrams: 12, category: .breakfast),
