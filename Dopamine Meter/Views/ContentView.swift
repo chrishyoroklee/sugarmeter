@@ -89,12 +89,12 @@ struct ContentView: View {
                             .foregroundStyle(viewModel.currentLevel.color)
                     }
 
-                    SugarPickerView(items: viewModel.displayedItems) { item, size in
+                    SugarPickerView(items: viewModel.displayedItems, libraryItems: viewModel.libraryItems) { item, size in
                         sfxPlayer.play()
                         viewModel.logSugar(item, size: size)
-                    } onAddCustom: { name, grams in
+                    } onAddCustom: { name, grams, category in
                         sfxPlayer.play()
-                        viewModel.addCustomItem(name: name, grams: grams)
+                        viewModel.addCustomItem(name: name, grams: grams, category: category)
                     } onRemoveCustom: { item in
                         sfxPlayer.play()
                         viewModel.removeCustomItem(item)

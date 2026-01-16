@@ -10,39 +10,51 @@ final class SugarMeterViewModel: ObservableObject {
     @Published var levelMessage: LevelMessage?
     @Published private(set) var thresholdMultipliers: ThresholdMultipliers
     @Published private(set) var displayedItems: [SugarItem]
-    @Published private(set) var items: [SugarItem]
+    @Published private(set) var libraryItems: [SugarItem]
     let visualCapacityMultiplier: Double
     private let logStore = DailySugarLogStore()
     private let minimumVisualCapacityGrams = 180
     private let lastResetKey = "lastResetDate"
     private static let recentItemsKey = "recentSugarItems"
+    private static let featuredItemCount = 10
     private static let customItemsKey = "customSugarItems"
     private var resetTimer: Timer?
     private var lastNotifiedLevel: SugarLevel = .l1
-    private var recentItemNames: [String]
-    private let baseItems: [SugarItem]
+    private var featuredItemNames: [String]
+    private let mainBaseItems: [SugarItem]
+    private let libraryBaseItems: [SugarItem]
     private var customItems: [CustomSugarItem]
 
     init(
         dailyLimit: Int = 36,
         items: [SugarItem] = SugarMeterViewModel.defaultItems,
+        libraryItems: [SugarItem] = SugarMeterViewModel.defaultLibraryItems,
         visualCapacityMultiplier: Double = 5.0,
         thresholdMultipliers: ThresholdMultipliers = .default
     ) {
         let baseItems = items
+        let libraryBaseItems = libraryItems
         let customItems = Self.loadCustomItems()
-        let combinedItems = baseItems + customItems.map { $0.asSugarItem() }
-        let recentNames = Self.loadRecentItems()
-        let orderedItems = Self.orderItems(items: combinedItems, recentNames: recentNames)
+        let customSugarItems = customItems.map { $0.asSugarItem() }
+        let combinedLibraryItems = libraryBaseItems + customSugarItems
+        let storedFeaturedNames = Self.loadRecentItems()
+        let normalizedFeaturedNames = Self.normalizeFeaturedNames(
+            storedFeaturedNames,
+            defaultItems: baseItems,
+            libraryItems: combinedLibraryItems
+        )
+        let featuredItems = Self.items(from: normalizedFeaturedNames, in: combinedLibraryItems)
+        let displayedItems = featuredItems + customSugarItems
 
         self.dailyLimit = max(dailyLimit, 1)
-        self.baseItems = baseItems
+        self.mainBaseItems = baseItems
+        self.libraryBaseItems = libraryBaseItems
         self.customItems = customItems
-        self.items = combinedItems
+        self.libraryItems = combinedLibraryItems
         self.visualCapacityMultiplier = max(visualCapacityMultiplier, 1)
         self.thresholdMultipliers = thresholdMultipliers.normalized()
-        self.recentItemNames = recentNames
-        self.displayedItems = orderedItems
+        self.featuredItemNames = normalizedFeaturedNames
+        self.displayedItems = displayedItems
         let storedLog = logStore.log(for: Date())
         self.totalSugarGrams = storedLog.grams
         self.logCount = storedLog.count
@@ -99,7 +111,7 @@ final class SugarMeterViewModel: ObservableObject {
 
     func logSugar(_ item: SugarItem, size: SugarItemSize) {
         ensureDailyReset()
-        updateRecents(with: item)
+        updateFeaturedItems(with: item)
         withAnimation(.easeInOut(duration: 0.6)) {
             totalSugarGrams += grams(for: item, size: size)
             logCount += 1
@@ -127,17 +139,16 @@ final class SugarMeterViewModel: ObservableObject {
         lastNotifiedLevel = currentLevel
     }
 
-    func addCustomItem(name: String, grams: Int) {
+    func addCustomItem(name: String, grams: Int, category: SugarItemCategory) {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, grams > 0 else { return }
         let lowercased = trimmed.lowercased()
-        guard !items.contains(where: { $0.storageKey.lowercased() == lowercased }) else { return }
+        guard !libraryItems.contains(where: { $0.storageKey.lowercased() == lowercased }) else { return }
 
-        let customItem = CustomSugarItem(name: trimmed, grams: grams)
+        let customItem = CustomSugarItem(name: trimmed, grams: grams, category: category)
         customItems.append(customItem)
         saveCustomItems(customItems)
-        items = baseItems + customItems.map { $0.asSugarItem() }
-        refreshDisplayedItems()
+        refreshItems()
     }
 
     func removeCustomItem(_ item: SugarItem) {
@@ -145,8 +156,7 @@ final class SugarMeterViewModel: ObservableObject {
         let lowercased = item.storageKey.lowercased()
         customItems.removeAll { $0.name.lowercased() == lowercased }
         saveCustomItems(customItems)
-        items = baseItems + customItems.map { $0.asSugarItem() }
-        refreshDisplayedItems()
+        refreshItems()
     }
 
     private func grams(for item: SugarItem, size: SugarItemSize) -> Int {
@@ -221,31 +231,47 @@ final class SugarMeterViewModel: ObservableObject {
         UserDefaults.standard.set(startOfDay, forKey: lastResetKey)
     }
 
-    private func updateRecents(with item: SugarItem) {
-        recentItemNames.removeAll { $0 == item.storageKey }
-        recentItemNames.insert(item.storageKey, at: 0)
+    private func updateFeaturedItems(with item: SugarItem) {
+        guard !item.isCustom else { return }
+        let name = item.storageKey
+
+        featuredItemNames.removeAll { $0 == name }
+        featuredItemNames.insert(name, at: 0)
+
+        if featuredItemNames.count > Self.featuredItemCount {
+            featuredItemNames = Array(featuredItemNames.prefix(Self.featuredItemCount))
+        }
+
         refreshDisplayedItems()
     }
 
     private func refreshDisplayedItems() {
-        let validNames = Set(items.map { $0.storageKey })
-        recentItemNames = recentItemNames.filter { validNames.contains($0) }
-        saveRecentItems(recentItemNames)
-        displayedItems = Self.orderItems(items: items, recentNames: recentItemNames)
-    }
+        let nonCustomLibraryItems = libraryItems.filter { !$0.isCustom }
+        let validNames = Set(nonCustomLibraryItems.map { $0.storageKey })
 
-    private static func orderItems(items: [SugarItem], recentNames: [String]) -> [SugarItem] {
-        var remaining = items
-        var ordered: [SugarItem] = []
+        featuredItemNames = featuredItemNames.filter { validNames.contains($0) }
 
-        for name in recentNames {
-            if let index = remaining.firstIndex(where: { $0.storageKey == name }) {
-                ordered.append(remaining.remove(at: index))
+        if featuredItemNames.count < Self.featuredItemCount {
+            let fillItems = mainBaseItems.map { $0.storageKey }
+            for name in fillItems where !featuredItemNames.contains(name) {
+                featuredItemNames.append(name)
+                if featuredItemNames.count == Self.featuredItemCount {
+                    break
+                }
             }
         }
 
-        ordered.append(contentsOf: remaining)
-        return ordered
+        saveRecentItems(featuredItemNames)
+
+        let featuredItems = Self.items(from: featuredItemNames, in: nonCustomLibraryItems)
+        let customSugarItems = customItems.map { $0.asSugarItem() }
+        displayedItems = featuredItems + customSugarItems
+    }
+
+    private func refreshItems() {
+        let customSugarItems = customItems.map { $0.asSugarItem() }
+        libraryItems = libraryBaseItems + customSugarItems
+        refreshDisplayedItems()
     }
 
     private static func loadRecentItems() -> [String] {
@@ -254,6 +280,47 @@ final class SugarMeterViewModel: ObservableObject {
 
     private func saveRecentItems(_ names: [String]) {
         UserDefaults.standard.set(names, forKey: Self.recentItemsKey)
+    }
+
+    private static func normalizeFeaturedNames(
+        _ stored: [String],
+        defaultItems: [SugarItem],
+        libraryItems: [SugarItem]
+    ) -> [String] {
+        let validNames = Set(libraryItems.filter { !$0.isCustom }.map { $0.storageKey })
+        var names = stored.filter { validNames.contains($0) }
+
+        if names.isEmpty {
+            names = defaultItems.map { $0.storageKey }
+        }
+
+        if names.count < featuredItemCount {
+            for name in defaultItems.map({ $0.storageKey }) where !names.contains(name) {
+                names.append(name)
+                if names.count == featuredItemCount {
+                    break
+                }
+            }
+        }
+
+        if names.count > featuredItemCount {
+            names = Array(names.prefix(featuredItemCount))
+        }
+
+        return names
+    }
+
+    private static func items(from names: [String], in items: [SugarItem]) -> [SugarItem] {
+        var remaining = items
+        var ordered: [SugarItem] = []
+
+        for name in names {
+            if let index = remaining.firstIndex(where: { $0.storageKey == name }) {
+                ordered.append(remaining.remove(at: index))
+            }
+        }
+
+        return ordered
     }
 
     private static func loadCustomItems() -> [CustomSugarItem] {
@@ -274,23 +341,94 @@ final class SugarMeterViewModel: ObservableObject {
 private struct CustomSugarItem: Codable, Equatable {
     let name: String
     let grams: Int
+    let category: SugarItemCategory
+
+    private enum CodingKeys: String, CodingKey {
+        case name
+        case grams
+        case category
+    }
+
+    init(name: String, grams: Int, category: SugarItemCategory) {
+        self.name = name
+        self.grams = grams
+        self.category = category
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        name = try container.decode(String.self, forKey: .name)
+        grams = try container.decode(Int.self, forKey: .grams)
+        category = try container.decodeIfPresent(SugarItemCategory.self, forKey: .category) ?? .custom
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(name, forKey: .name)
+        try container.encode(grams, forKey: .grams)
+        try container.encode(category, forKey: .category)
+    }
 
     func asSugarItem() -> SugarItem {
-        SugarItem(name: name, sugarGrams: grams, isCustom: true)
+        SugarItem(name: name, sugarGrams: grams, isCustom: true, category: category)
     }
 }
 
 extension SugarMeterViewModel {
     static let defaultItems: [SugarItem] = [
-        SugarItem(name: "Donut", sugarGrams: 22, imageName: "donut"),
-        SugarItem(name: "Can of Soda", sugarGrams: 39, imageName: "soda"),
-        SugarItem(name: "Chocolate Bar", sugarGrams: 24, imageName: "chocolate-bar"),
-        SugarItem(name: "Ice Cream Scoop", sugarGrams: 15, imageName: "ice-cream"),
-        SugarItem(name: "Cookie", sugarGrams: 12, imageName: "cookie"),
-        SugarItem(name: "Energy Drink", sugarGrams: 27, imageName: "energy-drink"),
-        SugarItem(name: "Bowl of Cereal", sugarGrams: 20, imageName: "cereal"),
-        SugarItem(name: "Frappuccino", sugarGrams: 45, imageName: "frappucino"),
-        SugarItem(name: "Candy Pack", sugarGrams: 30, imageName: "candy"),
-        SugarItem(name: "Juice Box", sugarGrams: 18, imageName: "juice-box")
+        SugarItem(name: "Donut", sugarGrams: 22, imageName: "donut", category: .bakery),
+        SugarItem(name: "Can of Soda", sugarGrams: 39, imageName: "soda", category: .drink),
+        SugarItem(name: "Chocolate Bar", sugarGrams: 24, imageName: "chocolate-bar", category: .candy),
+        SugarItem(name: "Ice Cream Scoop", sugarGrams: 15, imageName: "ice-cream", category: .dessert),
+        SugarItem(name: "Cookie", sugarGrams: 12, imageName: "cookie", category: .bakery),
+        SugarItem(name: "Energy Drink", sugarGrams: 27, imageName: "energy-drink", category: .drink),
+        SugarItem(name: "Bowl of Cereal", sugarGrams: 20, imageName: "cereal", category: .breakfast),
+        SugarItem(name: "Frappuccino", sugarGrams: 45, imageName: "frappucino", category: .drink),
+        SugarItem(name: "Candy Pack", sugarGrams: 30, imageName: "candy", category: .candy),
+        SugarItem(name: "Juice Box", sugarGrams: 18, imageName: "juice-box", category: .drink)
     ]
+
+    static let defaultLibraryItems: [SugarItem] = {
+        let extras: [SugarItem] = [
+            SugarItem(name: "Muffin", sugarGrams: 32, category: .bakery),
+            SugarItem(name: "Croissant", sugarGrams: 9, category: .bakery),
+            SugarItem(name: "Cupcake", sugarGrams: 27, category: .bakery),
+            SugarItem(name: "Brownie", sugarGrams: 28, category: .bakery),
+            SugarItem(name: "Lemonade", sugarGrams: 26, category: .drink),
+            SugarItem(name: "Sweet Tea", sugarGrams: 24, category: .drink),
+            SugarItem(name: "Sports Drink", sugarGrams: 21, category: .drink),
+            SugarItem(name: "Chocolate Milk", sugarGrams: 24, category: .drink),
+            SugarItem(name: "Bubble Tea", sugarGrams: 38, category: .drink),
+            SugarItem(name: "Milkshake", sugarGrams: 60, category: .drink),
+            SugarItem(name: "Smoothie (Store-bought)", sugarGrams: 40, category: .drink),
+            SugarItem(name: "Chocolate Bar", sugarGrams: 24, category: .candy),
+            SugarItem(name: "Candy Pack", sugarGrams: 30, category: .candy),
+            SugarItem(name: "Gummy Candy", sugarGrams: 23, category: .candy),
+            SugarItem(name: "Fruit Snacks", sugarGrams: 15, category: .candy),
+            SugarItem(name: "Ice Cream Scoop", sugarGrams: 15, category: .dessert),
+            SugarItem(name: "Ice Cream Bar", sugarGrams: 24, category: .dessert),
+            SugarItem(name: "Frozen Yogurt", sugarGrams: 30, category: .dessert),
+            SugarItem(name: "Bowl of Cereal", sugarGrams: 20, category: .breakfast),
+            SugarItem(name: "Granola Bar", sugarGrams: 14, category: .breakfast),
+            SugarItem(name: "Flavored Yogurt", sugarGrams: 18, category: .breakfast),
+            SugarItem(name: "Flavored Oatmeal Packet", sugarGrams: 12, category: .breakfast),
+            SugarItem(name: "Pancake Syrup (2 tbsp)", sugarGrams: 26, category: .breakfast),
+            SugarItem(name: "Ketchup (2 tbsp)", sugarGrams: 8, category: .condiment),
+            SugarItem(name: "BBQ Sauce (2 tbsp)", sugarGrams: 12, category: .condiment),
+            SugarItem(name: "Nutella (2 tbsp)", sugarGrams: 21, category: .condiment),
+            SugarItem(name: "Jam/Jelly (2 tbsp)", sugarGrams: 20, category: .condiment),
+            SugarItem(name: "Honey (1 tbsp)", sugarGrams: 17, category: .condiment),
+            SugarItem(name: "Maple Syrup (2 tbsp)", sugarGrams: 24, category: .condiment),
+            SugarItem(name: "Protein Bar", sugarGrams: 16, category: .snack),
+            SugarItem(name: "Trail Mix (Sweetened)", sugarGrams: 12, category: .snack),
+            SugarItem(name: "Granola", sugarGrams: 10, category: .snack),
+            SugarItem(name: "Acai Bowl", sugarGrams: 38, category: .snack),
+            SugarItem(name: "McFlurry", sugarGrams: 63, category: .fastfood),
+            SugarItem(name: "Blizzard", sugarGrams: 65, category: .fastfood),
+            SugarItem(name: "Chocolate Milk Box", sugarGrams: 18, category: .kids),
+            SugarItem(name: "Yogurt Tube", sugarGrams: 10, category: .kids),
+            SugarItem(name: "Frosted Cereal", sugarGrams: 18, category: .kids)
+        ]
+        return defaultItems + extras
+    }()
 }

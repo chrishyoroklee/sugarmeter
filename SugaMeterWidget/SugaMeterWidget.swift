@@ -93,6 +93,23 @@ struct SugaMeterWidget: Widget {
     }
 }
 
+struct SugaMeterLockScreenWidget: Widget {
+    let kind: String = "SugaMeterLockScreenWidget"
+
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: SugaMeterProvider()) { entry in
+            SugaMeterWidgetView(entry: entry)
+        }
+        .configurationDisplayName("SugaMeter (Lock Screen)")
+        .description("Quick sugar snapshot for your lock screen.")
+        .supportedFamilies([
+            .accessoryCircular,
+            .accessoryRectangular,
+            .accessoryInline
+        ])
+    }
+}
+
 struct SugaMeterWidgetView: View {
     let entry: SugaMeterEntry
     @Environment(\.widgetFamily) private var family

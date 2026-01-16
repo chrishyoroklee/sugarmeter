@@ -12,6 +12,7 @@ import SwiftUI
 struct SugaMeterWidgetBundle: WidgetBundle {
     var body: some Widget {
         SugaMeterWidget()
+        SugaMeterLockScreenWidget()
         SugaMeterWidgetControl()
         SugaMeterWidgetLiveActivity()
     }

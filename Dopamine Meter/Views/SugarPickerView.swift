@@ -2,12 +2,14 @@ import SwiftUI
 
 struct SugarPickerView: View {
     let items: [SugarItem]
+    let libraryItems: [SugarItem]
     var onSelect: (SugarItem, SugarItemSize) -> Void
-    var onAddCustom: (String, Int) -> Void
+    var onAddCustom: (String, Int, SugarItemCategory) -> Void
     var onRemoveCustom: (SugarItem) -> Void
 
     @State private var selectedItem: SugarItem?
     @State private var isAddCustomPresented = false
+    @State private var isLibraryPresented = false
     @State private var itemPendingRemoval: SugarItem?
 
     var body: some View {
@@ -36,9 +38,32 @@ struct SugarPickerView: View {
                 .padding(.horizontal, 4)
             }
 
-            Text("Tap a treat to pick a size.")
-                .font(.custom("AvenirNext-Medium", size: 12))
-                .foregroundStyle(AppTheme.textSecondary)
+            HStack {
+                Spacer(minLength: 0)
+                Button {
+                    isLibraryPresented = true
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "magnifyingglass")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(AppTheme.primary)
+                        Text("More Options")
+                            .font(.custom("AvenirNext-Medium", size: 12))
+                            .foregroundStyle(AppTheme.textSecondary)
+                    }
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 14)
+                    .background(
+                        Capsule()
+                            .fill(Color.white.opacity(0.9))
+                            .overlay(
+                                Capsule()
+                                    .stroke(AppTheme.primary.opacity(0.2), lineWidth: 1)
+                            )
+                    )
+                }
+                Spacer(minLength: 0)
+            }
         }
         .sheet(item: $selectedItem, onDismiss: {
             selectedItem = nil
@@ -51,12 +76,20 @@ struct SugarPickerView: View {
         }
         .sheet(isPresented: $isAddCustomPresented) {
             CustomTreatForm(
-                existingNames: Set(items.map { $0.name.lowercased() })
-            ) { name, grams in
-                onAddCustom(name, grams)
+                existingNames: Set(libraryItems.map { $0.name.lowercased() })
+            ) { name, grams, category in
+                onAddCustom(name, grams, category)
             }
             .presentationDetents([.height(360)])
             .presentationDragIndicator(.visible)
+        }
+        .fullScreenCover(isPresented: $isLibraryPresented) {
+            SugarPickerLibraryView(
+                items: libraryItems,
+                onSelect: onSelect,
+                onAddCustom: onAddCustom,
+                onRemoveCustom: onRemoveCustom
+            )
         }
         .confirmationDialog("Remove custom treat?", isPresented: Binding(
             get: { itemPendingRemoval != nil },
@@ -196,12 +229,14 @@ private struct AddCustomTreatCard: View {
 
 private struct CustomTreatForm: View {
     let existingNames: Set<String>
-    var onSave: (String, Int) -> Void
+    var onSave: (String, Int, SugarItemCategory) -> Void
     @Environment(\.dismiss) private var dismiss
     @State private var nameText = ""
     @State private var selectedGrams = 15
+    @State private var selectedCategory: SugarItemCategory = .other
 
     private let gramOptions = Array(1...70)
+    private let categoryOptions = SugarItemCategory.allCases.filter { $0 != .custom }
 
     var body: some View {
         VStack(spacing: 16) {
@@ -223,6 +258,19 @@ private struct CustomTreatForm: View {
                     .foregroundStyle(AppTheme.textSecondary)
                 TextField("Enter treat name", text: $nameText)
                     .textFieldStyle(.roundedBorder)
+            }
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Category")
+                    .font(.custom("AvenirNext-Medium", size: 12))
+                    .foregroundStyle(AppTheme.textSecondary)
+                Picker("Category", selection: $selectedCategory) {
+                    ForEach(categoryOptions) { category in
+                        Text(category.title)
+                            .tag(category)
+                    }
+                }
+                .pickerStyle(.menu)
             }
 
             VStack(alignment: .leading, spacing: 10) {
@@ -281,9 +329,296 @@ private struct CustomTreatForm: View {
         !trimmedName.isEmpty && existingNames.contains(trimmedName.lowercased())
     }
 
+
     private func save() {
         guard canSave else { return }
-        onSave(trimmedName, selectedGrams)
+        onSave(trimmedName, selectedGrams, selectedCategory)
         dismiss()
+    }
+}
+
+struct SugarPickerLibraryView: View {
+    let items: [SugarItem]
+    var onSelect: (SugarItem, SugarItemSize) -> Void
+    var onAddCustom: (String, Int, SugarItemCategory) -> Void
+    var onRemoveCustom: (SugarItem) -> Void
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var searchText = ""
+    @State private var selectedCategory: SugarItemCategory?
+    @State private var isFilterPresented = false
+    @State private var selectedItem: SugarItem?
+    @State private var itemPendingRemoval: SugarItem?
+    @State private var isAddCustomPresented = false
+    @State private var showConfirmation = false
+    @State private var confirmationItem: SugarItem?
+
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: 12), count: 3)
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 18) {
+                    ForEach(sectionedItems, id: \.category) { section in
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text(section.category.title)
+                                .font(.custom("AvenirNext-DemiBold", size: 12))
+                                .foregroundStyle(AppTheme.textSecondary)
+                                .padding(.horizontal, 6)
+
+                            LazyVGrid(columns: columns, spacing: 14) {
+                                ForEach(section.items) { item in
+                                    LibraryItemCard(item: item) {
+                                        selectedItem = item
+                                    } onLongPress: {
+                                        guard item.isCustom else { return }
+                                        itemPendingRemoval = item
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    LazyVGrid(columns: columns, spacing: 14) {
+                        LibraryAddCard {
+                            isAddCustomPresented = true
+                        }
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 12)
+                .padding(.bottom, 24)
+            }
+            .background(
+                LinearGradient(
+                    colors: [
+                        AppTheme.backgroundTop,
+                        AppTheme.backgroundBottom
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
+            )
+            .navigationTitle("Treat Library")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        isFilterPresented = true
+                    } label: {
+                        Label(filterTitle, systemImage: "line.3.horizontal.decrease.circle")
+                    }
+                }
+            }
+            .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search treats")
+        }
+        .overlay(alignment: .bottom) {
+            if showConfirmation, let item = confirmationItem {
+                LibraryConfirmationView(item: item)
+                    .padding(.bottom, 24)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
+        .sheet(item: $selectedItem, onDismiss: {
+            selectedItem = nil
+        }) { item in
+            SugarPickerSizeSheet(item: item) { size in
+                handleLibrarySelection(item: item, size: size)
+            }
+            .presentationDetents([.height(220)])
+            .presentationDragIndicator(.visible)
+        }
+        .sheet(isPresented: $isAddCustomPresented) {
+            CustomTreatForm(
+                existingNames: Set(items.map { $0.name.lowercased() })
+            ) { name, grams, category in
+                onAddCustom(name, grams, category)
+            }
+            .presentationDetents([.height(360)])
+            .presentationDragIndicator(.visible)
+        }
+        .confirmationDialog("Filter treats", isPresented: $isFilterPresented) {
+            Button("All") {
+                selectedCategory = nil
+            }
+            ForEach(availableCategories) { category in
+                Button(category.title) {
+                    selectedCategory = category
+                }
+            }
+        } message: {
+            Text("Pick a treat type to filter.")
+        }
+        .confirmationDialog("Remove custom treat?", isPresented: Binding(
+            get: { itemPendingRemoval != nil },
+            set: { if !$0 { itemPendingRemoval = nil } }
+        )) {
+            Button("Remove", role: .destructive) {
+                if let item = itemPendingRemoval {
+                    onRemoveCustom(item)
+                }
+                itemPendingRemoval = nil
+            }
+            Button("Cancel", role: .cancel) {
+                itemPendingRemoval = nil
+            }
+        } message: {
+            if let item = itemPendingRemoval {
+                Text("Delete \(item.name)?")
+            }
+        }
+    }
+
+    private var filterTitle: String {
+        selectedCategory?.title ?? "All"
+    }
+
+    private var availableCategories: [SugarItemCategory] {
+        SugarItemCategory.allCases.filter { category in
+            items.contains(where: { $0.category == category })
+        }
+    }
+
+    private var visibleItems: [SugarItem] {
+        let base = selectedCategory == nil ? items : items.filter { $0.category == selectedCategory }
+        let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return base }
+        return base.filter { $0.name.localizedCaseInsensitiveContains(trimmed) }
+    }
+
+    private var sectionedItems: [LibrarySection] {
+        let grouped = Dictionary(grouping: visibleItems, by: { $0.category })
+        let orderedCategories = SugarItemCategory.allCases.filter { grouped[$0]?.isEmpty == false }
+        return orderedCategories.map { category in
+            LibrarySection(category: category, items: grouped[category] ?? [])
+        }
+    }
+
+    private func handleLibrarySelection(item: SugarItem, size: SugarItemSize) {
+        onSelect(item, size)
+        confirmationItem = item
+        withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+            showConfirmation = true
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+            withAnimation(.easeOut(duration: 0.2)) {
+                showConfirmation = false
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                dismiss()
+            }
+        }
+    }
+}
+
+private struct LibrarySection: Identifiable {
+    let category: SugarItemCategory
+    let items: [SugarItem]
+
+    var id: String { category.rawValue }
+}
+
+private struct LibraryConfirmationView: View {
+    let item: SugarItem
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "checkmark.circle.fill")
+                .foregroundStyle(AppTheme.primary)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Logged")
+                    .font(.custom("AvenirNext-Medium", size: 11))
+                    .foregroundStyle(AppTheme.textSecondary)
+                Text(item.name)
+                    .font(.custom("AvenirNext-DemiBold", size: 13))
+                    .foregroundStyle(AppTheme.textPrimary)
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(
+            Capsule()
+                .fill(Color.white.opacity(0.9))
+                .overlay(
+                    Capsule()
+                        .stroke(AppTheme.primary.opacity(0.2), lineWidth: 1)
+                )
+                .shadow(color: Color.black.opacity(0.12), radius: 8, x: 0, y: 4)
+        )
+    }
+}
+
+private struct LibraryItemCard: View {
+    let item: SugarItem
+    var onTap: () -> Void
+    var onLongPress: () -> Void
+
+    var body: some View {
+        VStack(spacing: 8) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(Color.white.opacity(0.75))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .stroke(AppTheme.primary.opacity(0.2), lineWidth: 1)
+                    )
+
+                VStack(spacing: 6) {
+                    if let imageName = item.imageName {
+                        Image(imageName)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(height: 46)
+                    }
+                    Text(item.name)
+                        .font(.custom("AvenirNext-DemiBold", size: 12))
+                        .foregroundStyle(AppTheme.textPrimary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 6)
+                }
+            }
+            .aspectRatio(1, contentMode: .fit)
+
+            Text("\(item.sugarGrams)g")
+                .font(.custom("AvenirNext-Medium", size: 11))
+                .foregroundStyle(AppTheme.textSecondary)
+        }
+        .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .onTapGesture(perform: onTap)
+        .onLongPressGesture(minimumDuration: 0.35, perform: onLongPress)
+    }
+}
+
+private struct LibraryAddCard: View {
+    var onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
+            VStack(spacing: 8) {
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(Color.white.opacity(0.75))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .stroke(AppTheme.primary.opacity(0.2), lineWidth: 1)
+                    )
+                    .overlay(
+                        Image(systemName: "plus")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundStyle(AppTheme.primary)
+                    )
+                    .aspectRatio(1, contentMode: .fit)
+
+                Text("Add")
+                    .font(.custom("AvenirNext-Medium", size: 11))
+                    .foregroundStyle(AppTheme.textSecondary)
+            }
+        }
+        .buttonStyle(.plain)
     }
 }
