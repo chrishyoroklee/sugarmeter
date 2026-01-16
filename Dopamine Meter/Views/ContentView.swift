@@ -9,7 +9,6 @@ import SwiftUI
 
 struct ContentView: View {
     @AppStorage("dailySugarLimit", store: AppGroup.userDefaults) private var storedDailyLimit = 36
-    @AppStorage(AppGroup.unitKey, store: AppGroup.userDefaults) private var sugarUnitRaw = SugarUnit.grams.rawValue
     @StateObject private var viewModel: SugarMeterViewModel
     @EnvironmentObject private var musicPlayer: BackgroundMusicPlayer
     @Environment(\.scenePhase) private var scenePhase
@@ -29,10 +28,6 @@ struct ContentView: View {
 
     private var limitProgress: Double {
         viewModel.limitProgress
-    }
-
-    private var sugarUnit: SugarUnit {
-        SugarUnit(rawValue: sugarUnitRaw) ?? .grams
     }
 
     var body: some View {
@@ -81,7 +76,7 @@ struct ContentView: View {
                     .padding(.bottom, 40)
 
                 VStack(spacing: 10) {
-                    Text("\(sugarUnit.formattedWithUnit(from: viewModel.totalSugarGrams)) logged - \(Int(limitProgress * 100))% of \(sugarUnit.formattedWithUnit(from: viewModel.dailyLimit))")
+                    Text("\(viewModel.totalSugarGrams)g logged - \(Int(limitProgress * 100))% of \(viewModel.dailyLimit)g")
                         .font(.custom("AvenirNext-DemiBold", size: 16))
                         .foregroundStyle(AppTheme.textMuted)
 
@@ -94,7 +89,7 @@ struct ContentView: View {
                             .foregroundStyle(viewModel.currentLevel.color)
                     }
 
-                    SugarPickerView(items: viewModel.displayedItems, unit: sugarUnit) { item, size in
+                    SugarPickerView(items: viewModel.displayedItems) { item, size in
                         sfxPlayer.play()
                         viewModel.logSugar(item, size: size)
                     } onAddCustom: { name, grams in

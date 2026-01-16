@@ -6,7 +6,6 @@ struct OnboardingView: View {
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @AppStorage("dailySugarLimit", store: AppGroup.userDefaults) private var dailySugarLimit = 36
     @AppStorage("sugarStyle") private var sugarStyle = SugarStyle.balanced.rawValue
-    @AppStorage(AppGroup.unitKey, store: AppGroup.userDefaults) private var sugarUnitRaw = SugarUnit.grams.rawValue
 
     var body: some View {
         TabView(selection: $step) {
@@ -17,24 +16,17 @@ struct OnboardingView: View {
             }
             .tag(0)
 
-            OnboardingUnitView(selectedUnitRaw: $sugarUnitRaw) {
+            OnboardingStyleView(viewModel: viewModel) {
                 withAnimation(.easeInOut(duration: 0.35)) {
                     step = 2
                 }
             }
             .tag(1)
 
-            OnboardingStyleView(viewModel: viewModel) {
-                withAnimation(.easeInOut(duration: 0.35)) {
-                    step = 3
-                }
-            }
-            .tag(2)
-
             OnboardingInfoView {
                 completeOnboarding()
             }
-            .tag(3)
+            .tag(2)
         }
         .tabViewStyle(.page(indexDisplayMode: .always))
         .background(
@@ -220,73 +212,6 @@ struct OnboardingStyleView: View {
             }
             .disabled(!viewModel.canContinue)
             .opacity(viewModel.canContinue ? 1 : 0.6)
-            .padding(.bottom, 60)
-        }
-        .padding(.horizontal, 24)
-    }
-}
-
-struct OnboardingUnitView: View {
-    @Binding var selectedUnitRaw: String
-    var onContinue: () -> Void
-
-    var body: some View {
-        VStack(spacing: 20) {
-            Spacer()
-
-            VStack(spacing: 6) {
-                Text("Choose units")
-                    .font(.custom("AvenirNext-Heavy", size: 28))
-                    .foregroundStyle(AppTheme.textPrimary)
-                Text("Pick your preferred sugar metric")
-                    .font(.custom("AvenirNext-Medium", size: 14))
-                    .foregroundStyle(AppTheme.textSecondary)
-            }
-
-            HStack(alignment: .top, spacing: 12) {
-                Image("sugapanda")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 90, height: 90)
-                    .shadow(color: AppTheme.textPrimary.opacity(0.18), radius: 8, x: 0, y: 4)
-
-                Text("You can change this anytime in Settings.")
-                    .font(.custom("AvenirNext-Medium", size: 13))
-                    .foregroundStyle(AppTheme.textSecondary)
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 12)
-                    .background(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .fill(AppTheme.secondary.opacity(0.8))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .stroke(AppTheme.primary.opacity(0.5), lineWidth: 1)
-                            )
-                    )
-            }
-
-            Picker("Units", selection: $selectedUnitRaw) {
-                ForEach(SugarUnit.allCases) { unit in
-                    Text(unit.title)
-                        .tag(unit.rawValue)
-                }
-            }
-            .pickerStyle(.segmented)
-            .padding(.horizontal, 24)
-
-            Spacer()
-
-            Button(action: onContinue) {
-                Text("Continue")
-                    .font(.custom("AvenirNext-DemiBold", size: 16))
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 30)
-                    .padding(.vertical, 14)
-                    .background(
-                        Capsule()
-                            .fill(AppTheme.primary)
-                    )
-            }
             .padding(.bottom, 60)
         }
         .padding(.horizontal, 24)

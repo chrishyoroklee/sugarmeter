@@ -9,12 +9,11 @@ struct SugaMeterEntry: TimelineEntry {
     let progress: Double
     let statusLabel: String
     let statusColor: Color
-    let unitRaw: String
 }
 
 struct SugaMeterProvider: TimelineProvider {
     func placeholder(in context: Context) -> SugaMeterEntry {
-        makeEntry(totalGrams: 22, dailyLimit: 36, unitRaw: WidgetUnit.grams.rawValue)
+        makeEntry(totalGrams: 22, dailyLimit: 36)
     }
 
     func getSnapshot(in context: Context, completion: @escaping (SugaMeterEntry) -> Void) {
@@ -31,13 +30,12 @@ struct SugaMeterProvider: TimelineProvider {
         let defaults = UserDefaults(suiteName: WidgetConstants.appGroupID) ?? .standard
         let limitValue = defaults.integer(forKey: WidgetConstants.dailyLimitKey)
         let dailyLimit = limitValue > 0 ? limitValue : WidgetConstants.defaultLimit
-        let unitRaw = defaults.string(forKey: WidgetConstants.unitKey) ?? WidgetUnit.grams.rawValue
         let logStore = WidgetLogStore(userDefaults: defaults)
         let log = logStore.log(for: Date())
-        return makeEntry(totalGrams: log.grams, dailyLimit: dailyLimit, unitRaw: unitRaw)
+        return makeEntry(totalGrams: log.grams, dailyLimit: dailyLimit)
     }
 
-    private func makeEntry(totalGrams: Int, dailyLimit: Int, unitRaw: String) -> SugaMeterEntry {
+    private func makeEntry(totalGrams: Int, dailyLimit: Int) -> SugaMeterEntry {
         let maxVisual = max(dailyLimit * 5, 180)
         let fillFraction = min(Double(totalGrams) / Double(maxVisual), 1.0)
         let progress = min(Double(totalGrams) / Double(max(dailyLimit, 1)), 1.0)
@@ -50,8 +48,7 @@ struct SugaMeterProvider: TimelineProvider {
             fillFraction: fillFraction,
             progress: progress,
             statusLabel: label,
-            statusColor: color,
-            unitRaw: unitRaw
+            statusColor: color
         )
     }
 
@@ -99,7 +96,6 @@ struct SugaMeterWidget: Widget {
 struct SugaMeterWidgetView: View {
     let entry: SugaMeterEntry
     @Environment(\.widgetFamily) private var family
-    private var unit: WidgetUnit { WidgetUnit(rawValue: entry.unitRaw) ?? .grams }
 
     var body: some View {
         switch family {
@@ -129,7 +125,7 @@ struct SugaMeterWidgetView: View {
                 WidgetJarView(fillFraction: entry.fillFraction, fillColor: entry.statusColor)
                     .frame(width: 70, height: 80)
 
-                Text("\(unit.formattedWithUnit(from: entry.totalGrams)) / \(unit.formattedWithUnit(from: entry.dailyLimit))")
+                Text("\(entry.totalGrams)g / \(entry.dailyLimit)g")
                     .font(.custom("AvenirNext-Medium", size: 11))
                     .foregroundStyle(WidgetTheme.textSecondary)
             }
@@ -151,10 +147,10 @@ struct SugaMeterWidgetView: View {
                     Text("SugaMeter")
                         .font(.custom("AvenirNext-DemiBold", size: 14))
                         .foregroundStyle(WidgetTheme.textPrimary)
-                    Text("\(unit.formattedWithUnit(from: entry.totalGrams)) logged")
+                    Text("\(entry.totalGrams)g logged")
                         .font(.custom("AvenirNext-Heavy", size: 18))
                         .foregroundStyle(entry.statusColor)
-                    Text("Goal \(unit.formattedWithUnit(from: entry.dailyLimit)) · \(entry.statusLabel)")
+                    Text("Goal \(entry.dailyLimit)g · \(entry.statusLabel)")
                         .font(.custom("AvenirNext-Medium", size: 12))
                         .foregroundStyle(WidgetTheme.textSecondary)
                 }
@@ -171,7 +167,7 @@ struct SugaMeterWidgetView: View {
         Gauge(value: entry.progress) {
             Text("Sugar")
         } currentValueLabel: {
-            Text(unit.formattedWithUnit(from: entry.totalGrams))
+            Text("\(entry.totalGrams)g")
         }
         .gaugeStyle(.accessoryCircular)
         .tint(entry.statusColor)
@@ -185,7 +181,7 @@ struct SugaMeterWidgetView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text("SugaMeter")
                     .font(.custom("AvenirNext-DemiBold", size: 12))
-                Text("\(unit.formattedWithUnit(from: entry.totalGrams)) · \(entry.statusLabel)")
+                Text("\(entry.totalGrams)g · \(entry.statusLabel)")
                     .font(.custom("AvenirNext-Medium", size: 11))
                     .foregroundStyle(entry.statusColor)
             }
@@ -194,7 +190,7 @@ struct SugaMeterWidgetView: View {
     }
 
     private var accessoryInlineView: some View {
-        Text("Sugar \(unit.formattedWithUnit(from: entry.totalGrams))")
+        Text("Sugar \(entry.totalGrams)g")
     }
 }
 
@@ -262,44 +258,10 @@ private enum WidgetTheme {
     static let levelPurple = Color(red: 0.62, green: 0.28, blue: 0.84)
 }
 
-private enum WidgetUnit: String {
-    case grams
-    case ounces
-
-    var label: String {
-        switch self {
-        case .grams:
-            return "g"
-        case .ounces:
-            return "oz"
-        }
-    }
-
-    func formattedWithUnit(from grams: Int) -> String {
-        switch self {
-        case .grams:
-            return "\(grams)g"
-        case .ounces:
-            return "\(formatOunces(Double(grams) / 28.3495))oz"
-        }
-    }
-
-    private func formatOunces(_ value: Double) -> String {
-        var text = String(format: "%.2f", value)
-        if text.hasSuffix("00") {
-            text.removeLast(3)
-        } else if text.hasSuffix("0") {
-            text.removeLast(1)
-        }
-        return text
-    }
-}
-
 private enum WidgetConstants {
     static let appGroupID = "group.com.hyoroklee.sugarmeter"
     static let dailyLimitKey = "dailySugarLimit"
     static let logHistoryKey = "dailySugarLogs"
-    static let unitKey = "sugarUnit"
     static let defaultLimit = 36
 }
 
@@ -348,7 +310,6 @@ private struct WidgetLogStore {
         fillFraction: 0.25,
         progress: 0.6,
         statusLabel: "In target",
-        statusColor: WidgetTheme.levelGreen,
-        unitRaw: WidgetUnit.grams.rawValue
+        statusColor: WidgetTheme.levelGreen
     )
 }

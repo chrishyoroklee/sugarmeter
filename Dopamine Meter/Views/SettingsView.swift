@@ -8,7 +8,6 @@ struct SettingsView: View {
     @EnvironmentObject private var musicPlayer: BackgroundMusicPlayer
     var onReset: () -> Void = {}
     @AppStorage("dailySugarLimit", store: AppGroup.userDefaults) private var dailySugarLimit = 36
-    @AppStorage(AppGroup.unitKey, store: AppGroup.userDefaults) private var sugarUnitRaw = SugarUnit.grams.rawValue
     @AppStorage("musicVolume") private var musicVolume = 0.7
     @State private var limitSelection: DailyLimitOption = .balanced
     @State private var customLimitText: String = ""
@@ -29,7 +28,6 @@ struct SettingsView: View {
                 Form {
                     musicSection
                     dailyLimitSection
-                    unitSection
                     widgetSection
                     resetSection
                 }
@@ -47,7 +45,7 @@ struct SettingsView: View {
         .onAppear {
             musicPlayer.volume = musicVolume
             limitSelection = DailyLimitOption.selection(for: dailySugarLimit)
-            customLimitText = sugarUnit.formattedValue(from: dailySugarLimit)
+            customLimitText = "\(dailySugarLimit)"
         }
         .onChange(of: limitSelection) { _, newValue in
             applyDailyLimitSelection(newValue)
@@ -55,31 +53,27 @@ struct SettingsView: View {
         .onChange(of: customLimitText) { _, newValue in
             updateCustomLimit(from: newValue)
         }
-        .onChange(of: sugarUnitRaw) { _, _ in
-            limitSelection = DailyLimitOption.selection(for: dailySugarLimit)
-            customLimitText = sugarUnit.formattedValue(from: dailySugarLimit)
-        }
     }
 
     @ViewBuilder
     private var musicSection: some View {
         Section("Music") {
-            if musicPlayer.tracks.count > 1 {
-                Picker("Track", selection: $musicPlayer.selectedTrackID) {
-                    ForEach(musicPlayer.tracks) { track in
-                        Text(track.displayName)
-                            .tag(track.id)
-                    }
-                }
-                .pickerStyle(.segmented)
-            } else if let track = musicPlayer.tracks.first {
-                HStack {
-                    Text("Track")
-                    Spacer()
-                    Text(track.displayName)
-                        .foregroundStyle(AppTheme.textSecondary)
-                }
-            }
+//            if musicPlayer.tracks.count > 1 {
+//                Picker("Track", selection: $musicPlayer.selectedTrackID) {
+//                    ForEach(musicPlayer.tracks) { track in
+//                        Text(track.displayName)
+//                            .tag(track.id)
+//                    }
+//                }
+//                .pickerStyle(.segmented)
+//            } else if let track = musicPlayer.tracks.first {
+//                HStack {
+//                    Text("Track")
+//                    Spacer()
+//                    Text(track.displayName)
+//                        .foregroundStyle(AppTheme.textSecondary)
+//                }
+//            }
 
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
@@ -108,7 +102,7 @@ struct SettingsView: View {
         Section {
             Picker("Baseline", selection: $limitSelection) {
                 ForEach(DailyLimitOption.allCases) { option in
-                    Text(option.title(for: sugarUnit))
+                    Text(option.title)
                         .tag(option)
                 }
             }
@@ -116,10 +110,10 @@ struct SettingsView: View {
 
             if limitSelection == .custom {
                 HStack {
-                    Text("Custom \(sugarUnit.label)")
+                    Text("Custom grams")
                     Spacer()
                     TextField("Enter amount", text: $customLimitText)
-                        .keyboardType(sugarUnit == .ounces ? .decimalPad : .numberPad)
+                        .keyboardType(.numberPad)
                         .multilineTextAlignment(.trailing)
                         .frame(width: 90)
                 }
@@ -129,21 +123,6 @@ struct SettingsView: View {
         } footer: {
             Text("Baseline sets the recommended max. Levels scale from it.")
                 .foregroundStyle(AppTheme.textSecondary)
-        }
-    }
-
-    @ViewBuilder
-    private var unitSection: some View {
-        Section {
-            Picker("Units", selection: $sugarUnitRaw) {
-                ForEach(SugarUnit.allCases) { unit in
-                    Text(unit.title)
-                        .tag(unit.rawValue)
-                }
-            }
-            .pickerStyle(.segmented)
-        } header: {
-            Text("Units")
         }
     }
 
@@ -186,19 +165,15 @@ struct SettingsView: View {
     private func applyDailyLimitSelection(_ selection: DailyLimitOption) {
         if let limit = selection.limit {
             dailySugarLimit = limit
-            customLimitText = sugarUnit.formattedValue(from: limit)
+            customLimitText = "\(limit)"
         }
     }
 
     private func updateCustomLimit(from text: String) {
         guard limitSelection == .custom else { return }
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard let value = Double(trimmed), value > 0 else { return }
-        dailySugarLimit = sugarUnit.grams(from: value)
-    }
-
-    private var sugarUnit: SugarUnit {
-        SugarUnit(rawValue: sugarUnitRaw) ?? .grams
+        guard let value = Int(trimmed), value > 0 else { return }
+        dailySugarLimit = value
     }
 }
 
@@ -209,12 +184,12 @@ private enum DailyLimitOption: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    func title(for unit: SugarUnit) -> String {
+    var title: String {
         switch self {
         case .balanced:
-            return unit.formattedWithUnit(from: 36)
+            return "36g"
         case .strict:
-            return unit.formattedWithUnit(from: 22)
+            return "22g"
         case .custom:
             return "Custom"
         }
