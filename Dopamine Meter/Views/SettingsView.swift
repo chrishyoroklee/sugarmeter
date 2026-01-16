@@ -11,6 +11,7 @@ struct SettingsView: View {
     @AppStorage("musicVolume") private var musicVolume = 0.7
     @State private var limitSelection: DailyLimitOption = .balanced
     @State private var customLimitText: String = ""
+    @State private var isWidgetRefreshConfirmPresented = false
 
     var body: some View {
         NavigationStack {
@@ -130,9 +131,7 @@ struct SettingsView: View {
     private var widgetSection: some View {
         Section {
             Button {
-#if canImport(WidgetKit)
-                WidgetCenter.shared.reloadAllTimelines()
-#endif
+                isWidgetRefreshConfirmPresented = true
             } label: {
                 Text("Refresh Widget")
                     .font(.custom("AvenirNext-DemiBold", size: 15))
@@ -143,6 +142,19 @@ struct SettingsView: View {
         } footer: {
             Text("Use after logging if the widget lags.")
                 .foregroundStyle(AppTheme.textSecondary)
+        }
+        .confirmationDialog(
+            "Refresh widget now?",
+            isPresented: $isWidgetRefreshConfirmPresented
+        ) {
+            Button("Refresh", role: .none) {
+#if canImport(WidgetKit)
+                WidgetCenter.shared.reloadAllTimelines()
+#endif
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This forces an immediate widget update.")
         }
     }
 
